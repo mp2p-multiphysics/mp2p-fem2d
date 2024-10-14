@@ -1,4 +1,7 @@
 # folders to ignore
+_archive/
+_archive2/
+__pycache__/
 .vscode/
 Eigen/
 fem_test*/
@@ -12,3 +15,4 @@ output/
 *.py
 *.csv
 fem_test*
+.gitignore

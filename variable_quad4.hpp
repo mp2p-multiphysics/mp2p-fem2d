@@ -1,24 +1,26 @@
-#ifndef SCALAR_QUAD4
-#define SCALAR_QUAD4
+#ifndef VARIABLE_QUAD4
+#define VARIABLE_QUAD4
+#include <fstream>
 #include "mesh_quad4.hpp"
+#include "container_typedef.hpp"
 
-class ScalarQuad4
+class VariableQuad4
 {
     /*
 
-    Scalar applied over quad4 mesh elements.
+    Variable applied over quad4 mesh elements.
 
     Variables
     =========
     mesh_q4_in : MeshQuad4Struct
-        Mesh where scalar value is applied.
+        Mesh where variable value is applied.
     u_init_in : double
-        Initial value of the scalar.
+        Initial value of the variable.
 
     Functions
     =========
     output_csv : void
-        Outputs a CSV file with the values of the scalar.
+        Outputs a CSV file with the values of the variable.
 
     */
 
@@ -36,13 +38,13 @@ class ScalarQuad4
     void output_csv(std::string file_out_base_str, int ts);
 
     // default constructor
-    ScalarQuad4()
+    VariableQuad4()
     {
 
     }
 
     // constructor
-    ScalarQuad4(MeshQuad4Struct &mesh_q4_in, double u_init_in)
+    VariableQuad4(MeshQuad4Struct &mesh_q4_in, double u_init_in)
     {
 
         // store mesh
@@ -51,7 +53,7 @@ class ScalarQuad4
         // get number of domain points
         num_point_domain = mesh_q4_ptr->num_point_domain;
 
-        // populate initial values
+        // populate value vector with initial values
         for (int point_did = 0; point_did < num_point_domain; point_did++)
         {
             point_value_vec.push_back(u_init_in);
@@ -61,11 +63,11 @@ class ScalarQuad4
 
 };
 
-void ScalarQuad4::output_csv(std::string file_out_str)
+void VariableQuad4::output_csv(std::string file_out_str)
 {
     /*
 
-    Outputs a CSV file with the values of the scalar.
+    Outputs a CSV file with the values of the variable.
 
     Arguments
     =========
@@ -97,11 +99,11 @@ void ScalarQuad4::output_csv(std::string file_out_str)
 
 }
 
-void ScalarQuad4::output_csv(std::string file_out_base_str, int ts)
+void VariableQuad4::output_csv(std::string file_out_base_str, int ts)
 {
     /*
 
-    Outputs a CSV file with the values of the scalar.
+    Outputs a CSV file with the values of the variable.
 
     Arguments
     =========
