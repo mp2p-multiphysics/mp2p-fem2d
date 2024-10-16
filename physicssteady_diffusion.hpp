@@ -102,6 +102,9 @@ class PhysicsSteadyDiffusion : public PhysicsSteadyBase
         integral_physics_ptr->evaluate_Ni_derivative();
         integral_physics_ptr->evaluate_integral_div_Ni_dot_div_Nj();
         integral_physics_ptr->evaluate_integral_Ni();
+        integral_physics_ptr->evaluate_boundary_Ni_derivative();
+        integral_physics_ptr->evaluate_boundary_integral_Ni();
+        integral_physics_ptr->evaluate_boundary_integral_Ni_Nj();
 
     }
 
@@ -249,6 +252,10 @@ void PhysicsSteadyDiffusion::matrix_fill_domain
         int pa_lid = boundary_ptr->element_flux_pa_lid_vec[boundary_id];  // 0 to 3
         int pb_lid = boundary_ptr->element_flux_pb_lid_vec[boundary_id];  // 0 to 3
 
+        // get edge where boundary is applied
+        int helper_num = pa_lid + pb_lid + 1;
+        int boundary_key = (helper_num*helper_num - helper_num % 2)/4 + std::min(pa_lid, pb_lid);
+
         // identify boundary type
         int config_id = boundary_ptr->element_flux_boundaryconfig_id_vec[boundary_id];
         BoundaryConfigQuad4Struct bcq4 = boundary_ptr->boundaryconfig_vec[config_id];
@@ -265,23 +272,53 @@ void PhysicsSteadyDiffusion::matrix_fill_domain
         if (bcq4.type_str == "neumann")
         {
             
-            // PLACEHOLDER. DERIVE EXPRESSION FOR THIS.
-            
-            // add to b_vec
-            int mat_row = start_row + fid_arr[pa_lid];
-            b_vec.coeffRef(mat_row) += bcq4.parameter_vec[0];
+            // set a_mat and b_vec
+            // -1 values indicate invalid points
+            if (pa_lid != -1)
+            {
+                int mat_row = start_row + fid_arr[pa_lid];
+                b_vec.coeffRef(mat_row) += bcq4.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pa_lid];
+            }
+            if (pb_lid != -1)
+            {
+                int mat_row = start_row + fid_arr[pb_lid];
+                b_vec.coeffRef(mat_row) += bcq4.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pb_lid];
+            }
 
         }
         else if (bcq4.type_str == "robin")
         {
             
-            // PLACEHOLDER. DERIVE EXPRESSION FOR THIS.
+            // set a_mat and b_vec
+            // -1 values indicate invalid points
+            if (pa_lid != -1)
+            {
+                
+                // constant part - add terms to b vector
+                int mat_row = start_row + fid_arr[pa_lid];
+                b_vec.coeffRef(mat_row) += bcq4.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pa_lid];
 
-            // add to a_mat and b_vec
-            int mat_row = start_row + fid_arr[pa_lid];
-            int mat_col = value_field_ptr->start_col + fid_arr[pa_lid];
-            b_vec.coeffRef(mat_row) += bcq4.parameter_vec[0];
-            a_mat.coeffRef(mat_row, mat_col) += bcq4.parameter_vec[1];
+                // linear part - iterate over all test functions in element
+                for (int indx_j = 0; indx_j < 4; indx_j++){
+                    int mat_col = value_field_ptr->start_col + fid_arr[indx_j];  
+                    a_mat.coeffRef(mat_row, mat_col) += bcq4.parameter_vec[1] * integral_ptr->boundary_integral_Ni_Nj_map[ea_did][boundary_key][pa_lid][indx_j];
+                }
+                
+            }
+            if (pb_lid != -1)
+            {
+
+                // constant part - add terms to b vector
+                int mat_row = start_row + fid_arr[pb_lid];
+                b_vec.coeffRef(mat_row) += bcq4.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pb_lid];
+
+                // linear part - iterate over all test functions in element
+                for (int indx_j = 0; indx_j < 4; indx_j++){
+                    int mat_col = value_field_ptr->start_col + fid_arr[indx_j];  
+                    a_mat.coeffRef(mat_row, mat_col) += bcq4.parameter_vec[1] * integral_ptr->boundary_integral_Ni_Nj_map[ea_did][boundary_key][pb_lid][indx_j];
+                }
+
+            }
 
         }
         

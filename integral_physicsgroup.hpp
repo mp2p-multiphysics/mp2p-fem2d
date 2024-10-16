@@ -46,7 +46,7 @@ class IntegralPhysicsGroup
     // variables
     std::vector<IntegralQuad4*> integral_ptr_vec;
 
-    // functions
+    // functions for computing integrals
     void evaluate_Ni_derivative();
     void evaluate_integral_Ni();
     void evaluate_integral_derivative_Ni_x();
@@ -57,6 +57,11 @@ class IntegralPhysicsGroup
     void evaluate_integral_div_Ni_dot_div_Nj();
     void evaluate_integral_Ni_Nj_derivative_Nk_x();
     void evaluate_integral_Ni_Nj_derivative_Nk_y();
+
+    // functions for computing integrals for boundaries
+    void evaluate_boundary_Ni_derivative();
+    void evaluate_boundary_integral_Ni();
+    void evaluate_boundary_integral_Ni_Nj();
 
     // default constructor
     IntegralPhysicsGroup()
@@ -93,6 +98,31 @@ void IntegralPhysicsGroup::evaluate_Ni_derivative()
     for (auto integral_ptr : integral_ptr_vec)
     {
         integral_ptr->evaluate_Ni_derivative();
+    }
+
+}
+
+void IntegralPhysicsGroup::evaluate_boundary_Ni_derivative()
+{
+    /*
+
+    Calculates test functions (N) and their derivatives at the boundaries.
+    Must be called before integrals are evaluated.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */
+
+    // evaluate integrals in each domain
+    for (auto integral_ptr : integral_ptr_vec)
+    {
+        integral_ptr->evaluate_boundary_Ni_derivative();
     }
 
 }
@@ -311,6 +341,54 @@ void IntegralPhysicsGroup::evaluate_integral_Ni_Nj_derivative_Nk_y()
     for (auto integral_ptr : integral_ptr_vec)
     {
         integral_ptr->evaluate_integral_Ni_Nj_derivative_Nk_y();
+    }
+
+}
+
+void IntegralPhysicsGroup::evaluate_boundary_integral_Ni()
+{
+    /*
+
+    Calculates the integral of Ni along a boundary.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */
+
+    // evaluate integrals in each domain
+    for (auto integral_ptr : integral_ptr_vec)
+    {
+        integral_ptr->evaluate_boundary_integral_Ni();
+    }
+
+}
+
+void IntegralPhysicsGroup::evaluate_boundary_integral_Ni_Nj()
+{
+    /*
+
+    Calculates the integral of Ni * Nj along a boundary.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */
+
+    // evaluate integrals in each domain
+    for (auto integral_ptr : integral_ptr_vec)
+    {
+        integral_ptr->evaluate_boundary_integral_Ni_Nj();
     }
 
 }
