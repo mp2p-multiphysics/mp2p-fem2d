@@ -137,8 +137,31 @@ class MatrixEquationSteady
             // note: column in a_mat = row in x_vec
             int start_row = variable_field_ptr->start_col;
 
-            // iterate through each variable
-            for (auto variable_ptr : variable_field_ptr->variable_ptr_vec)
+            // iterate through each tri3 variable
+            for (auto variable_ptr : variable_field_ptr->variable_t3_ptr_vec)
+            {
+
+                // iterate through each global ID
+                for (auto point_gid : variable_ptr->mesh_t3_ptr->point_gid_vec)
+                {
+
+                    // get domain and field IDs
+                    int point_fid = variable_field_ptr->point_gid_to_fid_map[point_gid];
+                    int point_did = variable_ptr->mesh_t3_ptr->point_gid_to_did_map[point_gid];
+
+                    // get value from variable
+                    double value = variable_ptr->point_value_vec[point_did];
+
+                    // store value in x_vec
+                    int vec_row = start_row + point_fid;
+                    x_vec.coeffRef(vec_row) = value;
+
+                }
+
+            }
+
+            // iterate through each quad4 variable
+            for (auto variable_ptr : variable_field_ptr->variable_q4_ptr_vec)
             {
 
                 // iterate through each global ID
@@ -190,6 +213,36 @@ void MatrixEquationSteady::iterate_solution()
 
     }
 
+    // DEBUG - PRINT A
+    std::ofstream file_amat_out("a_mat.csv");
+    for (int i = 0; i < num_equation; i++)
+    {
+        for (int j = 0; j < num_equation; j++)
+        {
+
+            // last x value for given y
+            if (j == num_equation-1)
+            {
+                file_amat_out << a_mat.coeffRef(i, j) << "\n";
+                continue;
+            }
+
+            // output content of a matrix
+            file_amat_out << a_mat.coeffRef(i, j) << ",";
+
+        }
+    }
+    file_amat_out.close();
+
+    // DEBUG - PRINT B
+    std::ofstream file_bvec_out("b_vec.csv");
+    for (int i = 0; i < num_equation; i++)
+    {
+        file_bvec_out << b_vec.coeffRef(i) << "\n";
+    }
+    file_bvec_out.close();
+
+
     // solve the matrix equation
     Eigen::SparseLU<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
     solver.analyzePattern(a_mat);
@@ -222,8 +275,31 @@ void MatrixEquationSteady::store_solution()
         // note: column in a_mat = row in x_vec
         int start_row = variable_field_ptr->start_col;
 
-        // iterate through each variable
-        for (auto variable_ptr : variable_field_ptr->variable_ptr_vec)
+        // iterate through each tri3 variable
+        for (auto variable_ptr : variable_field_ptr->variable_t3_ptr_vec)
+        {
+
+            // iterate through each global ID
+            for (auto point_gid : variable_ptr->mesh_t3_ptr->point_gid_vec)
+            {
+
+                // get domain and field IDs
+                int point_fid = variable_field_ptr->point_gid_to_fid_map[point_gid];
+                int point_did = variable_ptr->mesh_t3_ptr->point_gid_to_did_map[point_gid];
+
+                // get value from x_vec
+                int vec_row = start_row + point_fid;
+                double value = x_vec.coeffRef(vec_row);
+
+                // store value in variable
+                variable_ptr->point_value_vec[point_did] = value;
+
+            }
+
+        }
+
+        // iterate through each quad4 variable
+        for (auto variable_ptr : variable_field_ptr->variable_q4_ptr_vec)
         {
 
             // iterate through each global ID

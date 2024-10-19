@@ -1,23 +1,23 @@
-#ifndef INTEGRAL_QUAD4
-#define INTEGRAL_QUAD4
+#ifndef INTEGRAL_TRI3
+#define INTEGRAL_TRI3
 #include <utility>
 #include <vector>
 #include "Eigen/Eigen"
-#include "boundary_quad4.hpp"
-#include "mesh_quad4.hpp"
+#include "boundary_tri3.hpp"
+#include "mesh_tri3.hpp"
 #include "container_typedef.hpp"
 
-class IntegralQuad4
+class IntegralTri3
 {
     /*
 
-    Test function (N) integrals for quad4 mesh elements.
+    Test function (N) integrals for tri3 mesh elements.
 
     Variables
     =========
-    mesh_q4_in : MeshQuad4
+    mesh_t3_in : MeshTri3
         struct with mesh data.
-    boundary_q4_in : BoundaryQuad4
+    boundary_t3_in : BoundaryTri3
         object with boundary condition data.
 
     Functions
@@ -60,8 +60,8 @@ class IntegralQuad4
     public:
     
     // mesh
-    MeshQuad4 *mesh_q4_ptr;
-    BoundaryQuad4 *boundary_q4_ptr;
+    MeshTri3 *mesh_t3_ptr;
+    BoundaryTri3 *boundary_t3_ptr;
 
     // vectors with test functions and derivatives
     Vector2D jacobian_determinant_vec;
@@ -106,21 +106,21 @@ class IntegralQuad4
     void evaluate_boundary_integral_Ni_Nj();
 
     // default constructor
-    IntegralQuad4()
+    IntegralTri3()
     {
 
     }
 
     // constructor
-    IntegralQuad4(MeshQuad4 &mesh_q4_in, BoundaryQuad4 &boundary_q4_in)
+    IntegralTri3(MeshTri3 &mesh_t3_in, BoundaryTri3 &boundary_t3_in)
     {
-        mesh_q4_ptr = &mesh_q4_in;
-        boundary_q4_ptr = &boundary_q4_in;
+        mesh_t3_ptr = &mesh_t3_in;
+        boundary_t3_ptr = &boundary_t3_in;
     }
 
 };
 
-void IntegralQuad4::evaluate_Ni_derivative()
+void IntegralTri3::evaluate_Ni_derivative()
 {
     /*
 
@@ -138,13 +138,12 @@ void IntegralQuad4::evaluate_Ni_derivative()
     */
 
     // integration points
-    // dimensionless coordinates if element is scaled to [-1, 1] * [-1, 1]
-    const double M_1_SQRT_3 = 1./sqrt(3);
-    double a_arr[4] = {+M_1_SQRT_3, +M_1_SQRT_3, -M_1_SQRT_3, -M_1_SQRT_3};
-    double b_arr[4] = {+M_1_SQRT_3, -M_1_SQRT_3, +M_1_SQRT_3, -M_1_SQRT_3};
+    // dimensionless coordinates if element is scaled to [0, 1] * [0, 1]
+    double a_arr[3] = {0.5, 0.5, 0.0};
+    double b_arr[3] = {0.5, 0.0, 0.5};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++)
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++)
     {
 
         // initialize
@@ -154,31 +153,27 @@ void IntegralQuad4::evaluate_Ni_derivative()
         Vector2D derivative_N_y_part_ml_vec;
 
         // get global ID of points around element
-        int p0_gid = mesh_q4_ptr->element_p0_gid_vec[element_did];
-        int p1_gid = mesh_q4_ptr->element_p1_gid_vec[element_did];
-        int p2_gid = mesh_q4_ptr->element_p2_gid_vec[element_did];
-        int p3_gid = mesh_q4_ptr->element_p3_gid_vec[element_did];
+        int p0_gid = mesh_t3_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_t3_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_t3_ptr->element_p2_gid_vec[element_did];
 
         // get domain ID of points
-        int p0_did = mesh_q4_ptr->point_gid_to_did_map[p0_gid];
-        int p1_did = mesh_q4_ptr->point_gid_to_did_map[p1_gid];
-        int p2_did = mesh_q4_ptr->point_gid_to_did_map[p2_gid];
-        int p3_did = mesh_q4_ptr->point_gid_to_did_map[p3_gid];
+        int p0_did = mesh_t3_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_t3_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_t3_ptr->point_gid_to_did_map[p2_gid];
 
         // get x values of points
-        double x0 = mesh_q4_ptr->point_position_x_vec[p0_did];
-        double x1 = mesh_q4_ptr->point_position_x_vec[p1_did];
-        double x2 = mesh_q4_ptr->point_position_x_vec[p2_did];
-        double x3 = mesh_q4_ptr->point_position_x_vec[p3_did];
+        double x0 = mesh_t3_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_t3_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_t3_ptr->point_position_x_vec[p2_did];
 
         // get y values of points
-        double y0 = mesh_q4_ptr->point_position_y_vec[p0_did];
-        double y1 = mesh_q4_ptr->point_position_y_vec[p1_did];
-        double y2 = mesh_q4_ptr->point_position_y_vec[p2_did];
-        double y3 = mesh_q4_ptr->point_position_y_vec[p3_did];
+        double y0 = mesh_t3_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_t3_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_t3_ptr->point_position_y_vec[p2_did];
 
         // iterate for each integration point (indx_l)
-        for (int indx_l = 0; indx_l < 4; indx_l++)
+        for (int indx_l = 0; indx_l < 3; indx_l++)
         {
 
             // initialize
@@ -191,10 +186,10 @@ void IntegralQuad4::evaluate_Ni_derivative()
             double b = b_arr[indx_l];
 
             // get derivatives of x and y with respect to a and b
-            double derivative_x_a = 0.25*(b*x0 - b*x1 + b*x2 - b*x3 - x0 - x1 + x2 + x3);
-            double derivative_x_b = 0.25*(a*x0 - a*x1 + a*x2 - a*x3 - x0 + x1 + x2 - x3);
-            double derivative_y_a = 0.25*(b*y0 - b*y1 + b*y2 - b*y3 - y0 - y1 + y2 + y3);
-            double derivative_y_b = 0.25*(a*y0 - a*y1 + a*y2 - a*y3 - y0 + y1 + y2 - y3);
+            double derivative_x_a = x0 - x1;
+            double derivative_x_b = x2 - x1;
+            double derivative_y_a = y0 - y1;
+            double derivative_y_b = y2 - y1;
 
             // get jacobian and its inverse and determinant
             Eigen::Matrix2d jacobian_mat;
@@ -203,17 +198,16 @@ void IntegralQuad4::evaluate_Ni_derivative()
             double jacobian_determinant = jacobian_mat.determinant();
 
             // iterate for each test function
-            for (int indx_i = 0; indx_i < 4; indx_i++)
+            for (int indx_i = 0; indx_i < 3; indx_i++)
             {
         
                 // get test function N
                 double N = 0.;
                 switch (indx_i)
                 {
-                    case 0: N = 0.25*(1. - a)*(1. - b); break;
-                    case 1: N = 0.25*(1. - a)*(1. + b); break;
-                    case 2: N = 0.25*(1. + a)*(1. + b); break;
-                    case 3: N = 0.25*(1. + a)*(1. - b); break;
+                    case 0: N = a; break;
+                    case 1: N = 1. - a - b; break;
+                    case 2: N = b; break;
                 }
 
                 // get derivatives of test function N
@@ -221,10 +215,9 @@ void IntegralQuad4::evaluate_Ni_derivative()
                 double derivative_N_b = 0.;
                 switch (indx_i)
                 {
-                    case 0: derivative_N_a = +0.25*(b - 1.); derivative_N_b = +0.25*(a - 1.); break;
-                    case 1: derivative_N_a = -0.25*(b + 1.); derivative_N_b = -0.25*(a - 1.); break;
-                    case 2: derivative_N_a = +0.25*(b + 1.); derivative_N_b = +0.25*(a + 1.); break;
-                    case 3: derivative_N_a = -0.25*(b - 1.); derivative_N_b = -0.25*(a + 1.); break;
+                    case 0: derivative_N_a =  1.; derivative_N_b =  0.; break;
+                    case 1: derivative_N_a = -1.; derivative_N_b = -1.; break;
+                    case 2: derivative_N_a =  0.; derivative_N_b =  1.; break;
                 }
 
                 // get vector with derivatives of test functions wrt a and b
@@ -262,7 +255,7 @@ void IntegralQuad4::evaluate_Ni_derivative()
 
 }
 
-void IntegralQuad4::evaluate_boundary_Ni_derivative()
+void IntegralTri3::evaluate_boundary_Ni_derivative()
 {
     /*
 
@@ -281,22 +274,21 @@ void IntegralQuad4::evaluate_boundary_Ni_derivative()
 
     // initialize 2D integration points (within element)
     const double M_1_SQRT_3 = 1./sqrt(3);
-    VectorDouble sample_vec = {-M_1_SQRT_3, +M_1_SQRT_3};
-    VectorDouble positive_vec = {+1., +1.};
-    VectorDouble negative_vec = {-1., -1.};
+    VectorDouble sample_vec = {0.5*(-M_1_SQRT_3 + 1.), 0.5*(M_1_SQRT_3 + 1.)};
+    VectorDouble zero_vec = {0., 0.};
 
     // initialize 1D integration points (along edge)
     // use capital letters (e.g., X, A) to denote variables along an edge
     VectorDouble A_vec = {-M_1_SQRT_3, +M_1_SQRT_3};
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_q4_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_t3_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and point local IDs
-        int element_gid = boundary_q4_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_q4_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_q4_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_t3_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_t3_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_t3_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -307,33 +299,29 @@ void IntegralQuad4::evaluate_boundary_Ni_derivative()
         // get coordinates of points defining the boundary
 
         // get element local ID
-        int element_did = mesh_q4_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_t3_ptr->element_gid_to_did_map[element_gid];
 
         // get global ID of points around element
-        int p0_gid = mesh_q4_ptr->element_p0_gid_vec[element_did];
-        int p1_gid = mesh_q4_ptr->element_p1_gid_vec[element_did];
-        int p2_gid = mesh_q4_ptr->element_p2_gid_vec[element_did];
-        int p3_gid = mesh_q4_ptr->element_p3_gid_vec[element_did];
+        int p0_gid = mesh_t3_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_t3_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_t3_ptr->element_p2_gid_vec[element_did];
 
         // get domain ID of points
-        int p0_did = mesh_q4_ptr->point_gid_to_did_map[p0_gid];
-        int p1_did = mesh_q4_ptr->point_gid_to_did_map[p1_gid];
-        int p2_did = mesh_q4_ptr->point_gid_to_did_map[p2_gid];
-        int p3_did = mesh_q4_ptr->point_gid_to_did_map[p3_gid];
+        int p0_did = mesh_t3_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_t3_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_t3_ptr->point_gid_to_did_map[p2_gid];
 
         // get x values of points
-        double x0 = mesh_q4_ptr->point_position_x_vec[p0_did];
-        double x1 = mesh_q4_ptr->point_position_x_vec[p1_did];
-        double x2 = mesh_q4_ptr->point_position_x_vec[p2_did];
-        double x3 = mesh_q4_ptr->point_position_x_vec[p3_did];
-        double x_arr[4] = {x0, x1, x2, x3};
+        double x0 = mesh_t3_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_t3_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_t3_ptr->point_position_x_vec[p2_did];
+        double x_arr[3] = {x0, x1, x2};
 
         // get y values of points
-        double y0 = mesh_q4_ptr->point_position_y_vec[p0_did];
-        double y1 = mesh_q4_ptr->point_position_y_vec[p1_did];
-        double y2 = mesh_q4_ptr->point_position_y_vec[p2_did];
-        double y3 = mesh_q4_ptr->point_position_y_vec[p3_did];
-        double y_arr[4] = {y0, y1, y2, y3};
+        double y0 = mesh_t3_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_t3_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_t3_ptr->point_position_y_vec[p2_did];
+        double y_arr[3] = {y0, y1, y2};
 
         // determine integration points used in gaussian integration
 
@@ -342,10 +330,9 @@ void IntegralQuad4::evaluate_boundary_Ni_derivative()
         VectorDouble b_vec;
         switch (boundary_key)
         {
-            case  1: a_vec = negative_vec; b_vec = sample_vec; break;  // left edge (0-1)
-            case  5: a_vec = sample_vec; b_vec = positive_vec; break;  // top edge (1-2)
-            case 11: a_vec = positive_vec; b_vec = sample_vec; break;  // right edge (2-3)
-            case  4: a_vec = sample_vec; b_vec = negative_vec; break;  // bottom edge (3-0)
+            case 1: a_vec = sample_vec; b_vec = zero_vec; break;  // bottom edge (0-1)
+            case 5: a_vec = zero_vec; b_vec = sample_vec; break;  // left edge (1-2)
+            case 2: a_vec = sample_vec; b_vec = sample_vec; break;  // hypotenouse (2-0)
         }
 
         // initialize
@@ -388,17 +375,16 @@ void IntegralQuad4::evaluate_boundary_Ni_derivative()
             double b = b_vec[indx_l];
 
             // iterate for each test function
-            for (int indx_i = 0; indx_i < 4; indx_i++)
+            for (int indx_i = 0; indx_i < 3; indx_i++)
             {
 
                 // get test function N
                 double N = 0.;
                 switch (indx_i)
                 {
-                    case 0: N = 0.25*(1. - a)*(1. - b); break;
-                    case 1: N = 0.25*(1. - a)*(1. + b); break;
-                    case 2: N = 0.25*(1. + a)*(1. + b); break;
-                    case 3: N = 0.25*(1. + a)*(1. - b); break;
+                    case 0: N = a; break;
+                    case 1: N = 1. - a - b; break;
+                    case 2: N = b; break;
                 }
 
                 // store in vectors
@@ -420,7 +406,7 @@ void IntegralQuad4::evaluate_boundary_Ni_derivative()
 
 }
 
-void IntegralQuad4::evaluate_integral_Ni()
+void IntegralTri3::evaluate_integral_Ni()
 {
     /*
 
@@ -436,18 +422,22 @@ void IntegralQuad4::evaluate_integral_Ni()
 
     */
 
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i];
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i];
         }
         integral_part_i_vec.push_back(integral_value);
     
@@ -458,7 +448,7 @@ void IntegralQuad4::evaluate_integral_Ni()
 
 }
 
-void IntegralQuad4::evaluate_integral_derivative_Ni_x()
+void IntegralTri3::evaluate_integral_derivative_Ni_x()
 {
     /*
 
@@ -474,18 +464,22 @@ void IntegralQuad4::evaluate_integral_derivative_Ni_x()
 
     */
     
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * derivative_N_x_vec[element_did][indx_l][indx_i];
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * derivative_N_x_vec[element_did][indx_l][indx_i];
         }
         integral_part_i_vec.push_back(integral_value);
     
@@ -496,7 +490,7 @@ void IntegralQuad4::evaluate_integral_derivative_Ni_x()
 
 }
 
-void IntegralQuad4::evaluate_integral_derivative_Ni_y()
+void IntegralTri3::evaluate_integral_derivative_Ni_y()
 {
     /*
 
@@ -512,18 +506,22 @@ void IntegralQuad4::evaluate_integral_derivative_Ni_y()
 
     */
     
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * derivative_N_y_vec[element_did][indx_l][indx_i];
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * derivative_N_y_vec[element_did][indx_l][indx_i];
         }
         integral_part_i_vec.push_back(integral_value);
     
@@ -534,7 +532,7 @@ void IntegralQuad4::evaluate_integral_derivative_Ni_y()
 
 }
 
-void IntegralQuad4::evaluate_integral_Ni_Nj()
+void IntegralTri3::evaluate_integral_Ni_Nj()
 {
     /*
 
@@ -550,20 +548,24 @@ void IntegralQuad4::evaluate_integral_Ni_Nj()
 
     */
 
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
     Vector1D integral_part_ij_vec;
-    for (int indx_j = 0; indx_j < 4; indx_j++){
+    for (int indx_j = 0; indx_j < 3; indx_j++){
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * N_vec[element_did][indx_l][indx_j];
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * N_vec[element_did][indx_l][indx_j];
         }
         integral_part_ij_vec.push_back(integral_value);
     
@@ -576,7 +578,7 @@ void IntegralQuad4::evaluate_integral_Ni_Nj()
 
 }
 
-void IntegralQuad4::evaluate_integral_Ni_derivative_Nj_x()
+void IntegralTri3::evaluate_integral_Ni_derivative_Nj_x()
 {
     /*
 
@@ -592,20 +594,24 @@ void IntegralQuad4::evaluate_integral_Ni_derivative_Nj_x()
 
     */
 
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
     Vector1D integral_part_ij_vec;
-    for (int indx_j = 0; indx_j < 4; indx_j++){
+    for (int indx_j = 0; indx_j < 3; indx_j++){
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * derivative_N_x_vec[element_did][indx_l][indx_j];
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * derivative_N_x_vec[element_did][indx_l][indx_j];
         }
         integral_part_ij_vec.push_back(integral_value);
     
@@ -618,7 +624,7 @@ void IntegralQuad4::evaluate_integral_Ni_derivative_Nj_x()
 
 }
 
-void IntegralQuad4::evaluate_integral_Ni_derivative_Nj_y()
+void IntegralTri3::evaluate_integral_Ni_derivative_Nj_y()
 {
     /*
 
@@ -634,20 +640,24 @@ void IntegralQuad4::evaluate_integral_Ni_derivative_Nj_y()
 
     */
 
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
     Vector1D integral_part_ij_vec;
-    for (int indx_j = 0; indx_j < 4; indx_j++){
+    for (int indx_j = 0; indx_j < 3; indx_j++){
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * derivative_N_y_vec[element_did][indx_l][indx_j];
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * derivative_N_y_vec[element_did][indx_l][indx_j];
         }
         integral_part_ij_vec.push_back(integral_value);
     
@@ -660,7 +670,7 @@ void IntegralQuad4::evaluate_integral_Ni_derivative_Nj_y()
 
 }
 
-void IntegralQuad4::evaluate_integral_div_Ni_dot_div_Nj()
+void IntegralTri3::evaluate_integral_div_Ni_dot_div_Nj()
 {
     /*
 
@@ -676,20 +686,24 @@ void IntegralQuad4::evaluate_integral_div_Ni_dot_div_Nj()
 
     */
 
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
     Vector1D integral_part_ij_vec;
-    for (int indx_j = 0; indx_j < 4; indx_j++){
+    for (int indx_j = 0; indx_j < 3; indx_j++){
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * (derivative_N_x_vec[element_did][indx_l][indx_i] * derivative_N_x_vec[element_did][indx_l][indx_j] + derivative_N_y_vec[element_did][indx_l][indx_i] * derivative_N_y_vec[element_did][indx_l][indx_j]);
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * (derivative_N_x_vec[element_did][indx_l][indx_i] * derivative_N_x_vec[element_did][indx_l][indx_j] + derivative_N_y_vec[element_did][indx_l][indx_i] * derivative_N_y_vec[element_did][indx_l][indx_j]);
         }
         integral_part_ij_vec.push_back(integral_value);
     
@@ -702,7 +716,7 @@ void IntegralQuad4::evaluate_integral_div_Ni_dot_div_Nj()
 
 }
 
-void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_x()
+void IntegralTri3::evaluate_integral_Ni_Nj_derivative_Nk_x()
 {
     /*
 
@@ -718,22 +732,26 @@ void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_x()
 
     */
 
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector3D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
     Vector2D integral_part_ij_vec;
-    for (int indx_j = 0; indx_j < 4; indx_j++){
+    for (int indx_j = 0; indx_j < 3; indx_j++){
     Vector1D integral_part_ijk_vec;
-    for (int indx_k = 0; indx_k < 4; indx_k++){
+    for (int indx_k = 0; indx_k < 3; indx_k++){
 
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * N_vec[element_did][indx_l][indx_j] * derivative_N_x_vec[element_did][indx_l][indx_k];
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * N_vec[element_did][indx_l][indx_j] * derivative_N_x_vec[element_did][indx_l][indx_k];
         }
         integral_part_ijk_vec.push_back(integral_value);
     
@@ -748,7 +766,7 @@ void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_x()
 
 }
 
-void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_y()
+void IntegralTri3::evaluate_integral_Ni_Nj_derivative_Nk_y()
 {
     /*
 
@@ -764,22 +782,26 @@ void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_y()
 
     */
 
+    // weights for integration
+    const double M_1_6 = 1./6.;
+    double w_arr[3] = {M_1_6, M_1_6, M_1_6};
+
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector3D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < 4; indx_i++){  
+    for (int indx_i = 0; indx_i < 3; indx_i++){  
     Vector2D integral_part_ij_vec;
-    for (int indx_j = 0; indx_j < 4; indx_j++){
+    for (int indx_j = 0; indx_j < 3; indx_j++){
     Vector1D integral_part_ijk_vec;
-    for (int indx_k = 0; indx_k < 4; indx_k++){
+    for (int indx_k = 0; indx_k < 3; indx_k++){
 
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < 4; indx_l++) 
+        for (int indx_l = 0; indx_l < 3; indx_l++) 
         {
-            integral_value += jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * N_vec[element_did][indx_l][indx_j] * derivative_N_y_vec[element_did][indx_l][indx_k];
+            integral_value += w_arr[indx_l] * jacobian_determinant_vec[element_did][indx_l] * N_vec[element_did][indx_l][indx_i] * N_vec[element_did][indx_l][indx_j] * derivative_N_y_vec[element_did][indx_l][indx_k];
         }
         integral_part_ijk_vec.push_back(integral_value);
     
@@ -794,7 +816,7 @@ void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_y()
 
 }
 
-void IntegralQuad4::evaluate_boundary_integral_Ni()
+void IntegralTri3::evaluate_boundary_integral_Ni()
 {
     /*
 
@@ -810,16 +832,22 @@ void IntegralQuad4::evaluate_boundary_integral_Ni()
 
     */
 
+    // initialize integration points
+    const double M_1_SQRT_3 = 1./sqrt(3);
+    VectorDouble sample_vec = {-M_1_SQRT_3, +M_1_SQRT_3};
+    VectorDouble positive_vec = {+1., +1.};
+    VectorDouble negative_vec = {-1., -1.};
+
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_q4_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_t3_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and boundary key
 
         // get element global ID and point local IDs
-        int element_gid = boundary_q4_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_q4_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_q4_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_t3_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_t3_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_t3_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -828,13 +856,13 @@ void IntegralQuad4::evaluate_boundary_integral_Ni()
         int boundary_key = (helper_num*helper_num - helper_num % 2)/4 + std::min(point_lid_a, point_lid_b);
 
         // get element local ID
-        int element_did = mesh_q4_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_t3_ptr->element_gid_to_did_map[element_gid];
     
         // calculate integrals
 
         // iterate for each test function combination
         Vector1D integral_part_i_vec;
-        for (int indx_i = 0; indx_i < 4; indx_i++){
+        for (int indx_i = 0; indx_i < 3; indx_i++){
 
             // iterate for each integration point
             double integral_value = 0;
@@ -851,7 +879,7 @@ void IntegralQuad4::evaluate_boundary_integral_Ni()
 
 }
 
-void IntegralQuad4::evaluate_boundary_integral_Ni_Nj()
+void IntegralTri3::evaluate_boundary_integral_Ni_Nj()
 {
     /*
 
@@ -867,16 +895,22 @@ void IntegralQuad4::evaluate_boundary_integral_Ni_Nj()
 
     */
 
+    // initialize integration points
+    const double M_1_SQRT_3 = 1./sqrt(3);
+    VectorDouble sample_vec = {-M_1_SQRT_3, +M_1_SQRT_3};
+    VectorDouble positive_vec = {+1., +1.};
+    VectorDouble negative_vec = {-1., -1.};
+
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_q4_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_t3_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and boundary key
 
         // get element global ID and point local IDs
-        int element_gid = boundary_q4_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_q4_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_q4_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_t3_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_t3_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_t3_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -885,15 +919,15 @@ void IntegralQuad4::evaluate_boundary_integral_Ni_Nj()
         int boundary_key = (helper_num*helper_num - helper_num % 2)/4 + std::min(point_lid_a, point_lid_b);
 
         // get element local ID
-        int element_did = mesh_q4_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_t3_ptr->element_gid_to_did_map[element_gid];
     
         // calculate integrals
 
         // iterate for each test function combination
         Vector2D integral_part_i_vec;
-        for (int indx_i = 0; indx_i < 4; indx_i++){
+        for (int indx_i = 0; indx_i < 3; indx_i++){
         Vector1D integral_part_ij_vec;
-        for (int indx_j = 0; indx_j < 4; indx_j++){
+        for (int indx_j = 0; indx_j < 3; indx_j++){
 
             // iterate for each integration point
             double integral_value = 0;

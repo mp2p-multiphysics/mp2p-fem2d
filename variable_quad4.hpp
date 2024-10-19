@@ -1,8 +1,8 @@
 #ifndef VARIABLE_QUAD4
 #define VARIABLE_QUAD4
 #include <fstream>
-#include "mesh_quad4.hpp"
 #include "container_typedef.hpp"
+#include "mesh_quad4.hpp"
 
 class VariableQuad4
 {
@@ -12,7 +12,7 @@ class VariableQuad4
 
     Variables
     =========
-    mesh_q4_in : MeshQuad4Struct
+    mesh_q4_in : MeshQuad4
         Mesh where variable value is applied.
     u_init_in : double
         Initial value of the variable.
@@ -31,7 +31,7 @@ class VariableQuad4
     VectorDouble point_value_vec;  // key: domain ID; value: value
     
     // mesh where variable is applied
-    MeshQuad4Struct* mesh_q4_ptr;  
+    MeshQuad4* mesh_q4_ptr;  
 
     // functions
     void output_csv(std::string file_out_str);
@@ -44,7 +44,7 @@ class VariableQuad4
     }
 
     // constructor
-    VariableQuad4(MeshQuad4Struct &mesh_q4_in, double u_init_in)
+    VariableQuad4(MeshQuad4 &mesh_q4_in, double u_init_in)
     {
 
         // store mesh

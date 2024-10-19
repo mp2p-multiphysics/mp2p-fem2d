@@ -1,26 +1,27 @@
-#ifndef SCALAR_QUAD4
-#define SCALAR_QUAD4
+#ifndef VARIABLE_TRI3
+#define VARIABLE_TRI3
+#include <fstream>
+#include <sstream>
 #include "container_typedef.hpp"
-#include "mesh_quad4.hpp"
+#include "mesh_tri3.hpp"
 
-
-class ScalarQuad4
+class VariableTri3
 {
     /*
 
-    Scalar applied over quad4 mesh elements.
+    Variable applied over tri3 mesh elements.
 
     Variables
     =========
-    mesh_q4_in : MeshQuad4
-        Mesh where scalar value is applied.
+    mesh_t3_in : MeshTri3
+        Mesh where variable value is applied.
     u_init_in : double
-        Initial value of the scalar.
+        Initial value of the variable.
 
     Functions
     =========
     output_csv : void
-        Outputs a CSV file with the values of the scalar.
+        Outputs a CSV file with the values of the variable.
 
     */
 
@@ -31,29 +32,29 @@ class ScalarQuad4
     VectorDouble point_value_vec;  // key: domain ID; value: value
     
     // mesh where variable is applied
-    MeshQuad4* mesh_q4_ptr;  
+    MeshTri3* mesh_t3_ptr;  
 
     // functions
     void output_csv(std::string file_out_str);
     void output_csv(std::string file_out_base_str, int ts);
 
     // default constructor
-    ScalarQuad4()
+    VariableTri3()
     {
 
     }
 
     // constructor
-    ScalarQuad4(MeshQuad4 &mesh_q4_in, double u_init_in)
+    VariableTri3(MeshTri3 &mesh_t3_in, double u_init_in)
     {
 
         // store mesh
-        mesh_q4_ptr = &mesh_q4_in;
+        mesh_t3_ptr = &mesh_t3_in;
 
         // get number of domain points
-        num_point_domain = mesh_q4_ptr->num_point_domain;
+        num_point_domain = mesh_t3_ptr->num_point_domain;
 
-        // populate initial values
+        // populate value vector with initial values
         for (int point_did = 0; point_did < num_point_domain; point_did++)
         {
             point_value_vec.push_back(u_init_in);
@@ -63,11 +64,11 @@ class ScalarQuad4
 
 };
 
-void ScalarQuad4::output_csv(std::string file_out_str)
+void VariableTri3::output_csv(std::string file_out_str)
 {
     /*
 
-    Outputs a CSV file with the values of the scalar.
+    Outputs a CSV file with the values of the variable.
 
     Arguments
     =========
@@ -91,19 +92,19 @@ void ScalarQuad4::output_csv(std::string file_out_str)
     file_out_stream << "gid,position_x,position_y,value\n";
     for (int point_did = 0; point_did < num_point_domain; point_did++)
     {
-        file_out_stream << mesh_q4_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_q4_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_q4_ptr->point_position_y_vec[point_did] << ",";
+        file_out_stream << mesh_t3_ptr->point_gid_vec[point_did] << ",";
+        file_out_stream << mesh_t3_ptr->point_position_x_vec[point_did] << ",";
+        file_out_stream << mesh_t3_ptr->point_position_y_vec[point_did] << ",";
         file_out_stream << point_value_vec[point_did] << "\n";
     }
 
 }
 
-void ScalarQuad4::output_csv(std::string file_out_base_str, int ts)
+void VariableTri3::output_csv(std::string file_out_base_str, int ts)
 {
     /*
 
-    Outputs a CSV file with the values of the scalar.
+    Outputs a CSV file with the values of the variable.
 
     Arguments
     =========
@@ -148,9 +149,9 @@ void ScalarQuad4::output_csv(std::string file_out_base_str, int ts)
     file_out_stream << "gid,position_x,position_y,value\n";
     for (int point_did = 0; point_did < num_point_domain; point_did++)
     {
-        file_out_stream << mesh_q4_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_q4_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_q4_ptr->point_position_y_vec[point_did] << ",";
+        file_out_stream << mesh_t3_ptr->point_gid_vec[point_did] << ",";
+        file_out_stream << mesh_t3_ptr->point_position_x_vec[point_did] << ",";
+        file_out_stream << mesh_t3_ptr->point_position_y_vec[point_did] << ",";
         file_out_stream << point_value_vec[point_did] << "\n";
     }
 

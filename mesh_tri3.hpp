@@ -1,14 +1,14 @@
-#ifndef MESH_QUAD4
-#define MESH_QUAD4
+#ifndef MESH_TRI3
+#define MESH_TRI3
 #include <unordered_map>
 #include "container_typedef.hpp"
 
 
-class MeshQuad4
+class MeshTri3
 {
     /*
 
-    Mesh domain made of quad4 elements.
+    Mesh domain made of tri3 elements.
 
     Variables
     =========
@@ -32,8 +32,6 @@ class MeshQuad4
         vector with global IDs of point 1 in the domain.
     element_p2_gid_vec : VectorInt
         vector with global IDs of point 2 in the domain.
-    element_p3_gid_vec : VectorInt
-        vector with global IDs of point 3 in the domain.
     point_gid_to_did_map : MapIntInt
         map that outputs the global ID of an element given its domain ID.
 
@@ -41,18 +39,18 @@ class MeshQuad4
     ====
     The global ID is a unique label for each point.
     The domain ID applies only to a domain and is used to iterate through the vectors in this code.
-    The figure below is a quad4 element transformed into local coordinates. Points 0, 1, 2, 3 are labeled.
+    The figure below is a tri3 element transformed into local coordinates. Points 0, 1, 2 are labeled.
 
-               (local y)
-                   ^
-                   |
-              1 ---|--- 2
-              |    |    | 
-        <----------+----------> (local x)     
-              |    |    |
-              0 ---|--- 3
-                   |
-                   v
+          (local y)
+             ^
+             |
+             2 \
+             |   \
+             |     \
+             |       \
+        <----1---------0------> (local x)
+             |
+             v
 
     */
 
@@ -79,17 +77,16 @@ class MeshQuad4
     VectorInt element_p0_gid_vec;
     VectorInt element_p1_gid_vec;
     VectorInt element_p2_gid_vec;
-    VectorInt element_p3_gid_vec;
     MapIntInt element_gid_to_did_map;
 
     // default constructor
-    MeshQuad4 ()
+    MeshTri3 ()
     {
 
     }
 
     // construcotr
-    MeshQuad4 (std::string file_in_point_str_in, std::string file_in_element_str_in)
+    MeshTri3 (std::string file_in_point_str_in, std::string file_in_element_str_in)
     {
 
         // store variables
@@ -110,7 +107,7 @@ class MeshQuad4
 
 };
 
-void MeshQuad4::read_mesh_point(std::string file_in_point_str)
+void MeshTri3::read_mesh_point(std::string file_in_point_str)
 {
 
     // read file with points
@@ -172,7 +169,7 @@ void MeshQuad4::read_mesh_point(std::string file_in_point_str)
 
 }
 
-void MeshQuad4::read_mesh_element(std::string file_in_element_str)
+void MeshTri3::read_mesh_element(std::string file_in_element_str)
 {
 
     // read file with elements
@@ -214,7 +211,6 @@ void MeshQuad4::read_mesh_element(std::string file_in_element_str)
                 case 1: element_p0_gid_vec.push_back(std::stod(value_element_str)); break;
                 case 2: element_p1_gid_vec.push_back(std::stod(value_element_str)); break;
                 case 3: element_p2_gid_vec.push_back(std::stod(value_element_str)); break;
-                case 4: element_p3_gid_vec.push_back(std::stod(value_element_str)); break;
             }
 
             // increment value count

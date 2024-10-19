@@ -1,16 +1,16 @@
-#ifndef BOUNDARY_QUAD4
-#define BOUNDARY_QUAD4
+#ifndef BOUNDARY_TRI3
+#define BOUNDARY_TRI3
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include "container_boundaryconfig.hpp"
 #include "container_typedef.hpp"
 
-class BoundaryQuad4
+class BoundaryTri3
 {
     /*
 
-    Boundary conditions (BC) for quad4 mesh elements.
+    Boundary conditions (BC) for tri3 mesh elements.
 
     Variables
     =========
@@ -30,8 +30,8 @@ class BoundaryQuad4
     ====
     Both CSV files must have the following columns:
         global element ID where BC is applied
-        1st local point ID where BC is applied (-1 or 0 to 3)
-        2nd local point ID where BC is applied (-1 or 0 to 3)
+        1st local point ID where BC is applied (-1 or 0 to 2)
+        2nd local point ID where BC is applied (-1 or 0 to 2)
         BC configuration ID
     Flux-type BCs add additional terms to the linearized equations (e.g., Neumann, Robin)
     Value-type BCs completely replace the linearized equations (e.g., Dirichlet)
@@ -68,13 +68,13 @@ class BoundaryQuad4
     void set_boundarycondition_parameter(int boundaryconfig_id, VectorDouble parameter_vec);
 
     // default constructor
-    BoundaryQuad4()
+    BoundaryTri3()
     {
 
     }
 
     // constructor
-    BoundaryQuad4(std::string file_in_flux_str_in, std::string file_in_value_str_in)
+    BoundaryTri3(std::string file_in_flux_str_in, std::string file_in_value_str_in)
     {
 
         // store variables
@@ -136,7 +136,7 @@ class BoundaryQuad4
 
 };
 
-void BoundaryQuad4::set_boundarycondition(int boundaryconfig_id, std::string type_str, VectorDouble parameter_vec)
+void BoundaryTri3::set_boundarycondition(int boundaryconfig_id, std::string type_str, VectorDouble parameter_vec)
 {
     /*
 
@@ -168,7 +168,7 @@ void BoundaryQuad4::set_boundarycondition(int boundaryconfig_id, std::string typ
 
 }
 
-void BoundaryQuad4::set_boundarycondition_parameter(int boundaryconfig_id, VectorDouble parameter_vec)
+void BoundaryTri3::set_boundarycondition_parameter(int boundaryconfig_id, VectorDouble parameter_vec)
 {
     /*
 
@@ -192,7 +192,7 @@ void BoundaryQuad4::set_boundarycondition_parameter(int boundaryconfig_id, Vecto
 
 }
 
-void BoundaryQuad4::read_boundary_flux(std::string file_in_flux_str)
+void BoundaryTri3::read_boundary_flux(std::string file_in_flux_str)
 {
 
     // read file with flux BC data
@@ -248,7 +248,7 @@ void BoundaryQuad4::read_boundary_flux(std::string file_in_flux_str)
 
 }
 
-void BoundaryQuad4::read_boundary_value(std::string file_in_value_str)
+void BoundaryTri3::read_boundary_value(std::string file_in_value_str)
 {
 
     // read file with value BC data

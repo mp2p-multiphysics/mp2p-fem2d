@@ -4,7 +4,9 @@
 #include <unordered_map>
 #include <vector>
 #include "mesh_quad4.hpp"
+#include "mesh_tri3.hpp"
 #include "scalar_quad4.hpp"
+#include "scalar_tri3.hpp"
 
 class ScalarFieldGroup
 {
@@ -14,8 +16,8 @@ class ScalarFieldGroup
 
     Variables
     =========
-    scalar_ptr_vec_in : vector<ScalarQuad4*>
-        vector with pointers to ScalarQuad4 objects.
+    scalar_ptr_vec_in : vector<ScalarBase*>
+        vector with pointers to ScalarBase objects.
     
     */
 
@@ -29,8 +31,10 @@ class ScalarFieldGroup
     MapIntInt point_gid_to_fid_map;  // key: global ID; value: field ID
 
     // scalars and meshes
-    std::vector<ScalarQuad4*> scalar_ptr_vec;  // vector of scalars
-    std::unordered_map<MeshQuad4Struct*, ScalarQuad4*> scalar_ptr_map;  // key: mesh; value: scalar
+    std::vector<ScalarTri3*> scalar_t3_ptr_vec;  // vector of scalars
+    std::vector<ScalarQuad4*> scalar_q4_ptr_vec;  // vector of scalars
+    std::unordered_map<MeshTri3*, ScalarTri3*> mesh_to_scalar_t3_ptr_map;  // key: mesh; value: scalar
+    std::unordered_map<MeshQuad4*, ScalarQuad4*> mesh_to_scalar_q4_ptr_map;  // key: mesh; value: scalar
 
     // default constructor
     ScalarFieldGroup()
@@ -39,16 +43,21 @@ class ScalarFieldGroup
     }
 
     // constructor
-    ScalarFieldGroup(std::vector<ScalarQuad4*> scalar_ptr_vec_in)
+    ScalarFieldGroup(std::vector<ScalarTri3*> scalar_t3_ptr_vec_in, std::vector<ScalarQuad4*> scalar_q4_ptr_vec_in)
     {
         
         // store vector of scalars
-        scalar_ptr_vec = scalar_ptr_vec_in;
+        scalar_t3_ptr_vec = scalar_t3_ptr_vec_in;
+        scalar_q4_ptr_vec = scalar_q4_ptr_vec_in;
 
         // map mesh to scalars
-        for (auto scalar_ptr : scalar_ptr_vec)
+        for (auto scalar_ptr : scalar_t3_ptr_vec)
         {
-            scalar_ptr_map[scalar_ptr->mesh_q4_ptr] = scalar_ptr;
+            mesh_to_scalar_t3_ptr_map[scalar_ptr->mesh_t3_ptr] = scalar_ptr;
+        }
+        for (auto scalar_ptr : scalar_q4_ptr_vec)
+        {
+            mesh_to_scalar_q4_ptr_map[scalar_ptr->mesh_q4_ptr] = scalar_ptr;
         }
 
         // get set of global IDs
@@ -58,7 +67,14 @@ class ScalarFieldGroup
         std::set<int> point_gid_set;  
 
         // iterate through each variable and get set of global IDs
-        for (auto scalar_ptr : scalar_ptr_vec)
+        for (auto scalar_ptr : scalar_t3_ptr_vec)
+        {
+            for (auto &point_gid : scalar_ptr->mesh_t3_ptr->point_gid_vec)
+            {
+                point_gid_set.insert(point_gid);
+            }
+        }
+        for (auto scalar_ptr : scalar_q4_ptr_vec)
         {
             for (auto &point_gid : scalar_ptr->mesh_q4_ptr->point_gid_vec)
             {

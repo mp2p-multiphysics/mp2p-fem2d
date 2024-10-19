@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include "variable_quad4.hpp"
+#include "variable_tri3.hpp"
 
 class VariableFieldGroup
 {
@@ -13,8 +14,8 @@ class VariableFieldGroup
 
     Variables
     =========
-    variable_ptr_vec_in : vector<VariableQuad4*>
-        vector with pointers to VariableQuad4 objects.
+    variable_ptr_vec_in : vector<VariableBase*>
+        vector with pointers to VariableBase objects.
     
     */
 
@@ -28,8 +29,10 @@ class VariableFieldGroup
     MapIntInt point_gid_to_fid_map;  // key: global ID; value: field ID
 
     // variables and meshes
-    std::vector<VariableQuad4*> variable_ptr_vec;  // vector of variables
-    std::unordered_map<MeshQuad4Struct*, VariableQuad4*> mesh_to_variable_ptr_map;  // key: mesh; value: variable
+    std::vector<VariableTri3*> variable_t3_ptr_vec;  // vector of variables
+    std::vector<VariableQuad4*> variable_q4_ptr_vec;  // vector of variables
+    std::unordered_map<MeshTri3*, VariableTri3*> mesh_to_variable_t3_ptr_map;  // key: mesh; value: variable
+    std::unordered_map<MeshQuad4*, VariableQuad4*> mesh_to_variable_q4_ptr_map;  // key: mesh; value: variable
    
     // starting column of variables in matrix equation
     int start_col = -1;
@@ -41,16 +44,21 @@ class VariableFieldGroup
     }
 
     // constructor
-    VariableFieldGroup(std::vector<VariableQuad4*> variable_ptr_vec_in)
+    VariableFieldGroup(std::vector<VariableTri3*> variable_t3_ptr_vec_in, std::vector<VariableQuad4*> variable_q4_ptr_vec_in)
     {
         
         // store vector of variables
-        variable_ptr_vec = variable_ptr_vec_in;
+        variable_t3_ptr_vec = variable_t3_ptr_vec_in;
+        variable_q4_ptr_vec = variable_q4_ptr_vec_in;
 
         // map mesh to variables
-        for (auto variable_ptr : variable_ptr_vec)
+        for (auto variable_ptr : variable_t3_ptr_vec)
         {
-            mesh_to_variable_ptr_map[variable_ptr->mesh_q4_ptr] = variable_ptr;
+            mesh_to_variable_t3_ptr_map[variable_ptr->mesh_t3_ptr] = variable_ptr;
+        }
+        for (auto variable_ptr : variable_q4_ptr_vec)
+        {
+            mesh_to_variable_q4_ptr_map[variable_ptr->mesh_q4_ptr] = variable_ptr;
         }
 
         // get set of global IDs
@@ -60,7 +68,14 @@ class VariableFieldGroup
         std::set<int> point_gid_set;  
 
         // iterate through each variable and get set of global IDs
-        for (auto variable_ptr : variable_ptr_vec)
+        for (auto variable_ptr : variable_t3_ptr_vec)
+        {
+            for (auto &point_gid : variable_ptr->mesh_t3_ptr->point_gid_vec)
+            {
+                point_gid_set.insert(point_gid);
+            }
+        }
+        for (auto variable_ptr : variable_q4_ptr_vec)
         {
             for (auto &point_gid : variable_ptr->mesh_q4_ptr->point_gid_vec)
             {
