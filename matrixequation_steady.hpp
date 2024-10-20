@@ -213,36 +213,6 @@ void MatrixEquationSteady::iterate_solution()
 
     }
 
-    // DEBUG - PRINT A
-    std::ofstream file_amat_out("a_mat.csv");
-    for (int i = 0; i < num_equation; i++)
-    {
-        for (int j = 0; j < num_equation; j++)
-        {
-
-            // last x value for given y
-            if (j == num_equation-1)
-            {
-                file_amat_out << a_mat.coeffRef(i, j) << "\n";
-                continue;
-            }
-
-            // output content of a matrix
-            file_amat_out << a_mat.coeffRef(i, j) << ",";
-
-        }
-    }
-    file_amat_out.close();
-
-    // DEBUG - PRINT B
-    std::ofstream file_bvec_out("b_vec.csv");
-    for (int i = 0; i < num_equation; i++)
-    {
-        file_bvec_out << b_vec.coeffRef(i) << "\n";
-    }
-    file_bvec_out.close();
-
-
     // solve the matrix equation
     Eigen::SparseLU<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
     solver.analyzePattern(a_mat);

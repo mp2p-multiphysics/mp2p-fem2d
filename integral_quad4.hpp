@@ -788,7 +788,7 @@ void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_y()
     }
     integral_part_i_vec.push_back(integral_part_ij_vec);
     }
-    integral_Ni_Nj_derivative_Nk_x_vec.push_back(integral_part_i_vec);
+    integral_Ni_Nj_derivative_Nk_y_vec.push_back(integral_part_i_vec);
 
     }
 
