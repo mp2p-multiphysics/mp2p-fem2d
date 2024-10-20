@@ -1,40 +1,49 @@
-#ifndef PHYSICSSTEADY_CONVECTIONDIFFUSION
-#define PHYSICSSTEADY_CONVECTIONDIFFUSION
+#ifndef PHYSICSSTEADY_DIFFUSION_MULTICOMPONENT
+#define PHYSICSSTEADY_DIFFUSION_MULTICOMPONENT
+#include <unordered_map>
 #include <vector>
 #include "Eigen/Eigen"
+#include "boundary_physicsgroup_vector.hpp"
 #include "boundary_physicsgroup.hpp"
 #include "container_typedef.hpp"
+#include "integral_physicsgroup_vector.hpp"
 #include "integral_physicsgroup.hpp"
 #include "mesh_physicsgroup.hpp"
 #include "physicssteady_base.hpp"
+#include "scalar_fieldgroup_matrix.hpp"
+#include "scalar_fieldgroup_vector.hpp"
 #include "scalar_fieldgroup.hpp"
+#include "variable_fieldgroup_vector.hpp"
 #include "variable_fieldgroup.hpp"
 
-class PhysicsSteadyConvectionDiffusion : public PhysicsSteadyBase
+class PhysicsSteadyDiffusionMulticomponent : public PhysicsSteadyBase
 {
     /*
 
-    Single-component steady-state convection-diffusion equation.    
-    
-    0 = -div(-b * grad(u) + u * v) + c
+    Multi-component steady-state diffusion equation.   
+
+    0 = -div(-b * grad(u)) + c wherein:
+
+    0 = -div(-b11 * grad(u1) - b12 * grad(u2) - b13 * grad(u3) - ...) + c1
+    0 = -div(-b21 * grad(u1) - b22 * grad(u2) - b23 * grad(u3) - ...) + c2
+    0 = -div(-b31 * grad(u1) - b32 * grad(u2) - b33 * grad(u3) - ...) + c3
+    ...
 
     Variables
     =========
     mesh_physics_in : MeshPhysicsGroup
         Meshes where this physics is applied to.
-    boundary_physics_in : BoundaryPhysicsGroup
+    boundary_physics_ptr_vec_in : BoundaryPhysicsGroupVector
         Boundary conditions pertinent to this physics.
     integral_physics_in : IntegralPhysicsGroup
         Test function integrals of the meshes.
-    value_field_in : VariableFieldGroup
-        u in 0 = -div(-b * grad(u) + u * v) + c.
+    value_field_ptr_vec_in : VariableFieldGroupVector
+        u in 0 = -div(-b * grad(u)) + c.
         This will be solved for by the matrix equation.
-    diffusioncoefficient_field_in : ScalarFieldGroup
-        b in 0 = -div(-b * grad(u) + u * v) + c.
-    velocity_x_field_in : ScalarFieldGroup
-        v in 0 = -div(-b * grad(u) + u * v) + c.
-    generationcoefficient_field_in : ScalarFieldGroup
-        c in 0 = -div(-b * grad(u) + u * v) + c.
+    diffusioncoefficient_field_ptr_mat_in : ScalarFieldGroupMatrix
+        b in 0 = -div(-b * grad(u)) + c.
+    generationcoefficient_field_ptr_vec_in : ScalarFieldGroupVector
+        c in 0 = -div(-b * grad(u)) + c.
 
     Functions
     =========
@@ -53,15 +62,13 @@ class PhysicsSteadyConvectionDiffusion : public PhysicsSteadyBase
 
     // physics groups
     MeshPhysicsGroup *mesh_physics_ptr;
-    BoundaryPhysicsGroup *boundary_physics_ptr;
-    IntegralPhysicsGroup *integral_physics_ptr;
+    BoundaryPhysicsGroupVector boundary_physics_ptr_vec;
+    IntegralPhysicsGroupVector integral_physics_ptr_vec;
 
     // field groups
-    VariableFieldGroup *value_field_ptr;
-    ScalarFieldGroup *diffusioncoefficient_field_ptr;
-    ScalarFieldGroup *velocity_x_field_ptr;
-    ScalarFieldGroup *velocity_y_field_ptr;
-    ScalarFieldGroup *generationcoefficient_field_ptr;
+    VariableFieldGroupVector value_field_ptr_vec;
+    ScalarFieldGroupMatrix diffusioncoefficient_field_ptr_mat;
+    ScalarFieldGroupVector generationcoefficient_field_ptr_vec;
 
     // vector of variable fields
     std::vector<VariableFieldGroup*> variable_field_ptr_vec;
@@ -76,48 +83,48 @@ class PhysicsSteadyConvectionDiffusion : public PhysicsSteadyBase
     std::vector<VariableFieldGroup*> get_variable_field_ptr_vec();
 
     // default constructor
-    PhysicsSteadyConvectionDiffusion()
+    PhysicsSteadyDiffusionMulticomponent()
     {
 
     }
 
     // constructor
-    PhysicsSteadyConvectionDiffusion
+    PhysicsSteadyDiffusionMulticomponent
     (
-        MeshPhysicsGroup &mesh_physics_in, BoundaryPhysicsGroup &boundary_physics_in, IntegralPhysicsGroup &integral_physics_in,
-        VariableFieldGroup &value_field_in,
-        ScalarFieldGroup &diffusioncoefficient_field_in, ScalarFieldGroup &velocity_x_field_in, ScalarFieldGroup &velocity_y_field_in, ScalarFieldGroup &generationcoefficient_field_in
+        MeshPhysicsGroup &mesh_physics_in, BoundaryPhysicsGroupVector &boundary_physics_ptr_vec_in, IntegralPhysicsGroupVector &integral_physics_ptr_vec_in,
+        VariableFieldGroupVector &value_field_ptr_vec_in,
+        ScalarFieldGroupMatrix &diffusioncoefficient_field_ptr_mat_in, ScalarFieldGroupVector &generationcoefficient_field_ptr_vec_in
     )
     {
         
         // store physics groups
         mesh_physics_ptr = &mesh_physics_in;
-        boundary_physics_ptr = &boundary_physics_in;
-        integral_physics_ptr = &integral_physics_in;
+        boundary_physics_ptr_vec = boundary_physics_ptr_vec_in;
+        integral_physics_ptr_vec = integral_physics_ptr_vec_in;
 
         // store field 
-        value_field_ptr = &value_field_in;
-        diffusioncoefficient_field_ptr = &diffusioncoefficient_field_in;
-        velocity_x_field_ptr = &velocity_x_field_in;
-        velocity_y_field_ptr = &velocity_y_field_in;
-        generationcoefficient_field_ptr = &generationcoefficient_field_in;
+        value_field_ptr_vec = value_field_ptr_vec_in;
+        diffusioncoefficient_field_ptr_mat = diffusioncoefficient_field_ptr_mat_in;
+        generationcoefficient_field_ptr_vec = generationcoefficient_field_ptr_vec_in;
 
         // vector of variable fields 
-        variable_field_ptr_vec = {value_field_ptr};
+        variable_field_ptr_vec = value_field_ptr_vec.get_vector();
 
-        // calculate integrals
-        integral_physics_ptr->evaluate_Ni_derivative();
-        integral_physics_ptr->evaluate_integral_div_Ni_dot_div_Nj();
-        integral_physics_ptr->evaluate_integral_Ni_derivative_Nj_x();
-        integral_physics_ptr->evaluate_integral_Ni_derivative_Nj_y();
-        integral_physics_ptr->evaluate_integral_Ni();
-        integral_physics_ptr->evaluate_integral_Ni_Nj_derivative_Nk_x();
-        integral_physics_ptr->evaluate_integral_Ni_Nj_derivative_Nk_y();
+        // iterate through integrals and evaluate
+        for (auto &integral_physics_ptr : integral_physics_ptr_vec.integral_physicsgroup_ptr_vec)
+        {
 
-        // calculate boundary integrals
-        integral_physics_ptr->evaluate_boundary_Ni_derivative();
-        integral_physics_ptr->evaluate_boundary_integral_Ni();
-        integral_physics_ptr->evaluate_boundary_integral_Ni_Nj();
+            // calculate integrals
+            integral_physics_ptr->evaluate_Ni_derivative();
+            integral_physics_ptr->evaluate_integral_div_Ni_dot_div_Nj();
+            integral_physics_ptr->evaluate_integral_Ni();
+
+            // calculate boundary integrals
+            integral_physics_ptr->evaluate_boundary_Ni_derivative();
+            integral_physics_ptr->evaluate_boundary_integral_Ni();
+            integral_physics_ptr->evaluate_boundary_integral_Ni_Nj();
+
+        }
 
     }
 
@@ -126,18 +133,20 @@ class PhysicsSteadyConvectionDiffusion : public PhysicsSteadyBase
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         MeshTri3 *mesh_ptr, BoundaryTri3 *boundary_ptr, IntegralTri3 *integral_ptr,
-        ScalarTri3 *diffusioncoefficient_ptr, ScalarTri3 *velocity_x_ptr, ScalarTri3 *velocity_y_ptr, ScalarTri3 *generationcoefficient_ptr
+        VariableFieldGroup *value_field_ptr,
+        ScalarTri3 *diffusioncoefficient_ptr, ScalarTri3 *generationcoefficient_ptr
     );
     void matrix_fill_domain_q4
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         MeshQuad4 *mesh_ptr, BoundaryQuad4 *boundary_ptr, IntegralQuad4 *integral_ptr,
-        ScalarQuad4 *diffusioncoefficient_ptr, ScalarQuad4 *velocity_x_ptr, ScalarQuad4 *velocity_y_ptr, ScalarQuad4 *generationcoefficient_ptr
+        VariableFieldGroup *value_field_ptr,
+        ScalarQuad4 *diffusioncoefficient_ptr, ScalarQuad4 *generationcoefficient_ptr
     );
 
 };
 
-void PhysicsSteadyConvectionDiffusion::matrix_fill
+void PhysicsSteadyDiffusionMulticomponent::matrix_fill
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec
 )
@@ -165,51 +174,108 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill
     for (int indx_d = 0; indx_d < mesh_physics_ptr->mesh_t3_ptr_vec.size(); indx_d++)
     {
 
-        // subset the mesh, boundary, and intergrals
+        // subset the mesh
         MeshTri3 *mesh_ptr = mesh_physics_ptr->mesh_t3_ptr_vec[indx_d];
-        BoundaryTri3 *boundary_ptr = boundary_physics_ptr->boundary_t3_ptr_vec[indx_d];
-        IntegralTri3 *integral_ptr = integral_physics_ptr->integral_t3_ptr_vec[indx_d];
 
-        // get scalar fields
-        ScalarTri3 *diffusioncoefficient_ptr = diffusioncoefficient_field_ptr->mesh_to_scalar_t3_ptr_map[mesh_ptr];
-        ScalarTri3 *velocity_x_ptr = velocity_x_field_ptr->mesh_to_scalar_t3_ptr_map[mesh_ptr];
-        ScalarTri3 *velocity_y_ptr = velocity_y_field_ptr->mesh_to_scalar_t3_ptr_map[mesh_ptr];
-        ScalarTri3 *generationcoefficient_ptr = generationcoefficient_field_ptr->mesh_to_scalar_t3_ptr_map[mesh_ptr];
+        // indx_r - row in diffusion matrix (diffusion equation)
+        // indx_c - column in diffusion matrix (variable)
 
-        // determine matrix coefficients for the domain
-        matrix_fill_domain_t3(a_mat, b_vec, x_vec, mesh_ptr, boundary_ptr, integral_ptr, diffusioncoefficient_ptr, velocity_x_ptr, velocity_y_ptr, generationcoefficient_ptr);
+        // iterate through each diffusion equation
+        for (int indx_r = 0; indx_r < boundary_physics_ptr_vec.num_entry; indx_r++)
+        {
+            
+            // subset the boundary conditions and integrals
+            BoundaryTri3 *boundary_ptr = boundary_physics_ptr_vec.get_entry(indx_r)->boundary_t3_ptr_vec[indx_d];
+            IntegralTri3 *integral_ptr = integral_physics_ptr_vec.get_entry(indx_r)->integral_t3_ptr_vec[indx_d];
+
+            // subset value and generation coefficient
+            VariableFieldGroup *value_field_ptr = value_field_ptr_vec.get_entry(indx_r);
+            ScalarTri3 *generationcoefficient_ptr = generationcoefficient_field_ptr_vec.get_entry(indx_r)->mesh_to_scalar_t3_ptr_map[mesh_ptr];
+
+            // iterate through each variable
+            for (auto &key_value : diffusioncoefficient_field_ptr_mat.get_row(indx_r))
+            {
+
+                // subset diffusion coefficient
+                int indx_c = key_value.first;
+                ScalarTri3 *diffusioncoefficient_ptr = diffusioncoefficient_field_ptr_mat.get_entry(indx_r, indx_c)->mesh_to_scalar_t3_ptr_map[mesh_ptr];
+
+                // determine matrix coefficients for the domain and equation
+                matrix_fill_domain_t3(a_mat, b_vec, x_vec, mesh_ptr, boundary_ptr, integral_ptr, value_field_ptr, diffusioncoefficient_ptr, generationcoefficient_ptr);
+
+            }
+
+        }
 
     }
+
 
     // iterate through each domain covered by a quad4 mesh
     for (int indx_d = 0; indx_d < mesh_physics_ptr->mesh_q4_ptr_vec.size(); indx_d++)
     {
 
-        // subset the mesh, boundary, and intergrals
+        // subset the mesh
         MeshQuad4 *mesh_ptr = mesh_physics_ptr->mesh_q4_ptr_vec[indx_d];
-        BoundaryQuad4 *boundary_ptr = boundary_physics_ptr->boundary_q4_ptr_vec[indx_d];
-        IntegralQuad4 *integral_ptr = integral_physics_ptr->integral_q4_ptr_vec[indx_d];
 
-        // get scalar fields
-        ScalarQuad4 *diffusioncoefficient_ptr = diffusioncoefficient_field_ptr->mesh_to_scalar_q4_ptr_map[mesh_ptr];
-        ScalarQuad4 *velocity_x_ptr = velocity_x_field_ptr->mesh_to_scalar_q4_ptr_map[mesh_ptr];
-        ScalarQuad4 *velocity_y_ptr = velocity_y_field_ptr->mesh_to_scalar_q4_ptr_map[mesh_ptr];
-        ScalarQuad4 *generationcoefficient_ptr = generationcoefficient_field_ptr->mesh_to_scalar_q4_ptr_map[mesh_ptr];
+        // indx_r - row in diffusion matrix (diffusion equation)
+        // indx_c - column in diffusion matrix (variable)
 
-        // determine matrix coefficients for the domain
-        matrix_fill_domain_q4(a_mat, b_vec, x_vec, mesh_ptr, boundary_ptr, integral_ptr, diffusioncoefficient_ptr, velocity_x_ptr, velocity_y_ptr, generationcoefficient_ptr);
+        // iterate through each diffusion equation
+        for (int indx_r = 0; indx_r < boundary_physics_ptr_vec.num_entry; indx_r++)
+        {
+            
+            // subset the boundary conditions and integrals
+            BoundaryQuad4 *boundary_ptr = boundary_physics_ptr_vec.get_entry(indx_r)->boundary_q4_ptr_vec[indx_d];
+            IntegralQuad4 *integral_ptr = integral_physics_ptr_vec.get_entry(indx_r)->integral_q4_ptr_vec[indx_d];
+
+            // subset value and generation coefficient
+            VariableFieldGroup *value_field_ptr = value_field_ptr_vec.get_entry(indx_r);
+            ScalarQuad4 *generationcoefficient_ptr = generationcoefficient_field_ptr_vec.get_entry(indx_r)->mesh_to_scalar_q4_ptr_map[mesh_ptr];
+
+            // iterate through each variable
+            for (auto &key_value : diffusioncoefficient_field_ptr_mat.get_row(indx_r))
+            {
+
+                // subset diffusion coefficient
+                int indx_c = key_value.first;
+                ScalarQuad4 *diffusioncoefficient_ptr = diffusioncoefficient_field_ptr_mat.get_entry(indx_r, indx_c)->mesh_to_scalar_q4_ptr_map[mesh_ptr];
+
+                // determine matrix coefficients for the domain and equation
+                matrix_fill_domain_q4(a_mat, b_vec, x_vec, mesh_ptr, boundary_ptr, integral_ptr, value_field_ptr, diffusioncoefficient_ptr, generationcoefficient_ptr);
+
+            }
+
+        }
 
     }
 
 }
 
-void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
+void PhysicsSteadyDiffusionMulticomponent::matrix_fill_domain_t3
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     MeshTri3 *mesh_ptr, BoundaryTri3 *boundary_ptr, IntegralTri3 *integral_ptr,
-    ScalarTri3 *diffusioncoefficient_ptr, ScalarTri3 *velocity_x_ptr, ScalarTri3 *velocity_y_ptr, ScalarTri3 *generationcoefficient_ptr
+    VariableFieldGroup *value_field_ptr,
+    ScalarTri3 *diffusioncoefficient_ptr, ScalarTri3 *generationcoefficient_ptr
 )
 {
+
+    // calculate adjustment in starting row
+    // e.g., 1st variable starts at start_row, 2nd starts after 1st, etc.
+    int adjust_start_row = 0;
+    for (auto &value_field_ptr_sub : value_field_ptr_vec.get_vector())
+    {
+        
+        // stop incrementing if dealing with current variable
+        if (value_field_ptr_sub == value_field_ptr)
+        {
+            break;
+        }
+
+        // add number of rows occupied by previous variables
+        adjust_start_row += value_field_ptr->num_point_field;
+
+    }
 
     // iterate for each domain element
     for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++)
@@ -233,18 +299,6 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
         double diffcoeff_p2 = diffusioncoefficient_ptr->point_value_vec[p2_did];
         double diffcoeff_arr[3] = {diffcoeff_p0, diffcoeff_p1, diffcoeff_p2};
 
-        // get x velocity of points around element
-        double velx_p0 = velocity_x_ptr->point_value_vec[p0_did];
-        double velx_p1 = velocity_x_ptr->point_value_vec[p1_did];
-        double velx_p2 = velocity_x_ptr->point_value_vec[p2_did];
-        double velx_arr[3] = {velx_p0, velx_p1, velx_p2};
-
-        // get y velocity of points around element
-        double vely_p0 = velocity_y_ptr->point_value_vec[p0_did];
-        double vely_p1 = velocity_y_ptr->point_value_vec[p1_did];
-        double vely_p2 = velocity_y_ptr->point_value_vec[p2_did];
-        double vely_arr[3] = {vely_p0, vely_p1, vely_p2};
-
         // get generation coefficient of points around element
         double gencoeff_p0 = generationcoefficient_ptr->point_value_vec[p0_did];
         double gencoeff_p1 = generationcoefficient_ptr->point_value_vec[p1_did];
@@ -265,33 +319,15 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
         // calculate a_mat coefficients
         for (int indx_i = 0; indx_i < 3; indx_i++){
         for (int indx_j = 0; indx_j < 3; indx_j++){
-            
-            // calculate matrix row and column
-            int mat_row = start_row + fid_arr[indx_i];
+            int mat_row = start_row + adjust_start_row + fid_arr[indx_i];
             int mat_col = value_field_ptr->start_col + fid_arr[indx_j];
-
-            // calculate velocity derivative
-            double integral_Ni_Nj_dvelx_dx = 0;
-            double integral_Ni_Nj_dvely_dy = 0;
-            for (int indx_k = 0; indx_k < 3; indx_k++){
-                integral_Ni_Nj_dvelx_dx += velx_arr[indx_k]*integral_ptr->integral_Ni_Nj_derivative_Nk_x_vec[element_did][indx_i][indx_j][indx_k];
-                integral_Ni_Nj_dvely_dy += vely_arr[indx_k]*integral_ptr->integral_Ni_Nj_derivative_Nk_y_vec[element_did][indx_i][indx_j][indx_k];
-            }
-
-            // fill up a_mat
-            a_mat.coeffRef(mat_row, mat_col) += (
-                diffcoeff_arr[indx_i]*integral_ptr->integral_div_Ni_dot_div_Nj_vec[element_did][indx_i][indx_j] +
-                velx_arr[indx_i]*integral_ptr->integral_Ni_derivative_Nj_x_vec[element_did][indx_i][indx_j] +
-                vely_arr[indx_i]*integral_ptr->integral_Ni_derivative_Nj_y_vec[element_did][indx_i][indx_j] +
-                integral_Ni_Nj_dvelx_dx + integral_Ni_Nj_dvely_dy
-            );
-
+            a_mat.coeffRef(mat_row, mat_col) += diffcoeff_arr[indx_i]*integral_ptr->integral_div_Ni_dot_div_Nj_vec[element_did][indx_i][indx_j];
         }}
 
         // calculate b_vec coefficients
         for (int indx_i = 0; indx_i < 3; indx_i++)
         {
-            int mat_row = start_row + fid_arr[indx_i];
+            int mat_row = start_row + adjust_start_row + fid_arr[indx_i];
             b_vec.coeffRef(mat_row) += gencoeff_arr[indx_i]*integral_ptr->integral_Ni_vec[element_did][indx_i];
         }
 
@@ -340,12 +376,12 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
             // -1 values indicate invalid points
             if (pa_lid != -1)
             {
-                int mat_row = start_row + fid_arr[pa_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pa_lid];
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pa_lid];
             }
             if (pb_lid != -1)
             {
-                int mat_row = start_row + fid_arr[pb_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pb_lid];
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pb_lid];
             }
 
@@ -359,7 +395,7 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
             {
                 
                 // constant part - add terms to b vector
-                int mat_row = start_row + fid_arr[pa_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pa_lid];
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pa_lid];
 
                 // linear part - iterate over all test functions in element
@@ -373,7 +409,7 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
             {
 
                 // constant part - add terms to b vector
-                int mat_row = start_row + fid_arr[pb_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pb_lid];
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pb_lid];
 
                 // linear part - iterate over all test functions in element
@@ -419,13 +455,13 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
         // -1 values indicate invalid points
         if (pa_lid != -1)
         {
-            int mat_row = start_row + fid_arr[pa_lid];
+            int mat_row = start_row + adjust_start_row + fid_arr[pa_lid];
             a_mat.row(mat_row) *= 0.;
             b_vec.coeffRef(mat_row) = 0.;
         }
         if (pb_lid != -1)
         {
-            int mat_row = start_row + fid_arr[pb_lid];
+            int mat_row = start_row + adjust_start_row + fid_arr[pb_lid];
             a_mat.row(mat_row) *= 0.;
             b_vec.coeffRef(mat_row) = 0.;
         }
@@ -471,14 +507,14 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
             // -1 values indicate invalid points
             if (pa_lid != -1)
             {
-                int mat_row = start_row + fid_arr[pa_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pa_lid];
                 int mat_col = value_field_ptr->start_col + fid_arr[pa_lid];
                 a_mat.coeffRef(mat_row, mat_col) += 1.;
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0];
             }
             if (pb_lid != -1)
             {
-                int mat_row = start_row + fid_arr[pb_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pb_lid];
                 int mat_col = value_field_ptr->start_col + fid_arr[pb_lid];
                 a_mat.coeffRef(mat_row, mat_col) += 1.;
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0];
@@ -490,13 +526,32 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_t3
 
 }
 
-void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
+
+void PhysicsSteadyDiffusionMulticomponent::matrix_fill_domain_q4
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     MeshQuad4 *mesh_ptr, BoundaryQuad4 *boundary_ptr, IntegralQuad4 *integral_ptr,
-    ScalarQuad4 *diffusioncoefficient_ptr, ScalarQuad4 *velocity_x_ptr, ScalarQuad4 *velocity_y_ptr, ScalarQuad4 *generationcoefficient_ptr
+    VariableFieldGroup *value_field_ptr,
+    ScalarQuad4 *diffusioncoefficient_ptr, ScalarQuad4 *generationcoefficient_ptr
 )
 {
+
+    // calculate adjustment in starting row
+    // e.g., 1st variable starts at start_row, 2nd starts after 1st, etc.
+    int adjust_start_row = 0;
+    for (auto &value_field_ptr_sub : value_field_ptr_vec.get_vector())
+    {
+        
+        // stop incrementing if dealing with current variable
+        if (value_field_ptr_sub == value_field_ptr)
+        {
+            break;
+        }
+
+        // add number of rows occupied by previous variables
+        adjust_start_row += value_field_ptr->num_point_field;
+
+    }
 
     // iterate for each domain element
     for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++)
@@ -523,20 +578,6 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
         double diffcoeff_p3 = diffusioncoefficient_ptr->point_value_vec[p3_did];
         double diffcoeff_arr[4] = {diffcoeff_p0, diffcoeff_p1, diffcoeff_p2, diffcoeff_p3};
 
-        // get x velocity of points around element
-        double velx_p0 = velocity_x_ptr->point_value_vec[p0_did];
-        double velx_p1 = velocity_x_ptr->point_value_vec[p1_did];
-        double velx_p2 = velocity_x_ptr->point_value_vec[p2_did];
-        double velx_p3 = velocity_x_ptr->point_value_vec[p3_did];
-        double velx_arr[4] = {velx_p0, velx_p1, velx_p2, velx_p3};
-
-        // get y velocity of points around element
-        double vely_p0 = velocity_y_ptr->point_value_vec[p0_did];
-        double vely_p1 = velocity_y_ptr->point_value_vec[p1_did];
-        double vely_p2 = velocity_y_ptr->point_value_vec[p2_did];
-        double vely_p3 = velocity_y_ptr->point_value_vec[p3_did];
-        double vely_arr[4] = {vely_p0, vely_p1, vely_p2, vely_p3};
-
         // get generation coefficient of points around element
         double gencoeff_p0 = generationcoefficient_ptr->point_value_vec[p0_did];
         double gencoeff_p1 = generationcoefficient_ptr->point_value_vec[p1_did];
@@ -559,33 +600,15 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
         // calculate a_mat coefficients
         for (int indx_i = 0; indx_i < 4; indx_i++){
         for (int indx_j = 0; indx_j < 4; indx_j++){
-
-            // calculate matrix row and column
-            int mat_row = start_row + fid_arr[indx_i];
+            int mat_row = start_row + adjust_start_row + fid_arr[indx_i];
             int mat_col = value_field_ptr->start_col + fid_arr[indx_j];
-
-            // calculate velocity derivative
-            double integral_Ni_Nj_dvelx_dx = 0;
-            double integral_Ni_Nj_dvely_dy = 0;
-            for (int indx_k = 0; indx_k < 4; indx_k++){
-                integral_Ni_Nj_dvelx_dx += velx_arr[indx_k]*integral_ptr->integral_Ni_Nj_derivative_Nk_x_vec[element_did][indx_i][indx_j][indx_k];
-                integral_Ni_Nj_dvely_dy += vely_arr[indx_k]*integral_ptr->integral_Ni_Nj_derivative_Nk_y_vec[element_did][indx_i][indx_j][indx_k];
-            }
-
-            // fill up a_mat
-            a_mat.coeffRef(mat_row, mat_col) += (
-                diffcoeff_arr[indx_i]*integral_ptr->integral_div_Ni_dot_div_Nj_vec[element_did][indx_i][indx_j] +
-                velx_arr[indx_i]*integral_ptr->integral_Ni_derivative_Nj_x_vec[element_did][indx_i][indx_j] +
-                vely_arr[indx_i]*integral_ptr->integral_Ni_derivative_Nj_y_vec[element_did][indx_i][indx_j] +
-                integral_Ni_Nj_dvelx_dx + integral_Ni_Nj_dvely_dy
-            );
-
+            a_mat.coeffRef(mat_row, mat_col) += diffcoeff_arr[indx_i]*integral_ptr->integral_div_Ni_dot_div_Nj_vec[element_did][indx_i][indx_j];
         }}
 
         // calculate b_vec coefficients
         for (int indx_i = 0; indx_i < 4; indx_i++)
         {
-            int mat_row = start_row + fid_arr[indx_i];
+            int mat_row = start_row + adjust_start_row + fid_arr[indx_i];
             b_vec.coeffRef(mat_row) += gencoeff_arr[indx_i]*integral_ptr->integral_Ni_vec[element_did][indx_i];
         }
 
@@ -636,12 +659,12 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
             // -1 values indicate invalid points
             if (pa_lid != -1)
             {
-                int mat_row = start_row + fid_arr[pa_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pa_lid];
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pa_lid];
             }
             if (pb_lid != -1)
             {
-                int mat_row = start_row + fid_arr[pb_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pb_lid];
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pb_lid];
             }
 
@@ -655,7 +678,7 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
             {
                 
                 // constant part - add terms to b vector
-                int mat_row = start_row + fid_arr[pa_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pa_lid];
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pa_lid];
 
                 // linear part - iterate over all test functions in element
@@ -669,7 +692,7 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
             {
 
                 // constant part - add terms to b vector
-                int mat_row = start_row + fid_arr[pb_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pb_lid];
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0] * integral_ptr->boundary_integral_Ni_map[ea_did][boundary_key][pb_lid];
 
                 // linear part - iterate over all test functions in element
@@ -717,13 +740,13 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
         // -1 values indicate invalid points
         if (pa_lid != -1)
         {
-            int mat_row = start_row + fid_arr[pa_lid];
+            int mat_row = start_row + adjust_start_row + fid_arr[pa_lid];
             a_mat.row(mat_row) *= 0.;
             b_vec.coeffRef(mat_row) = 0.;
         }
         if (pb_lid != -1)
         {
-            int mat_row = start_row + fid_arr[pb_lid];
+            int mat_row = start_row + adjust_start_row + fid_arr[pb_lid];
             a_mat.row(mat_row) *= 0.;
             b_vec.coeffRef(mat_row) = 0.;
         }
@@ -771,14 +794,14 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
             // -1 values indicate invalid points
             if (pa_lid != -1)
             {
-                int mat_row = start_row + fid_arr[pa_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pa_lid];
                 int mat_col = value_field_ptr->start_col + fid_arr[pa_lid];
                 a_mat.coeffRef(mat_row, mat_col) += 1.;
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0];
             }
             if (pb_lid != -1)
             {
-                int mat_row = start_row + fid_arr[pb_lid];
+                int mat_row = start_row + adjust_start_row + fid_arr[pb_lid];
                 int mat_col = value_field_ptr->start_col + fid_arr[pb_lid];
                 a_mat.coeffRef(mat_row, mat_col) += 1.;
                 b_vec.coeffRef(mat_row) += boundaryconfig.parameter_vec[0];
@@ -790,7 +813,7 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill_domain_q4
 
 }
 
-void PhysicsSteadyConvectionDiffusion::set_start_row(int start_row_in)
+void PhysicsSteadyDiffusionMulticomponent::set_start_row(int start_row_in)
 {
     /*
 
@@ -811,7 +834,7 @@ void PhysicsSteadyConvectionDiffusion::set_start_row(int start_row_in)
 
 }
 
-int PhysicsSteadyConvectionDiffusion::get_start_row()
+int PhysicsSteadyDiffusionMulticomponent::get_start_row()
 {
     /*
 
@@ -832,7 +855,7 @@ int PhysicsSteadyConvectionDiffusion::get_start_row()
 
 }
 
-std::vector<VariableFieldGroup*> PhysicsSteadyConvectionDiffusion::get_variable_field_ptr_vec()
+std::vector<VariableFieldGroup*> PhysicsSteadyDiffusionMulticomponent::get_variable_field_ptr_vec()
 {
     /*
 
@@ -848,7 +871,7 @@ std::vector<VariableFieldGroup*> PhysicsSteadyConvectionDiffusion::get_variable_
         Vector containing pointers to VariableFieldGroup objects.
 
     */
-    
+
     return variable_field_ptr_vec;
 
 }
