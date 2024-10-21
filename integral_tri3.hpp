@@ -73,6 +73,10 @@ class IntegralTri3
     MapIntIntVector1D boundary_jacobian_determinant_map;
     MapIntIntVector2D boundary_N_map;
 
+    // maps with normal vectors for boundaries
+    MapIntIntDouble boundary_normal_x_map;
+    MapIntIntDouble boundary_normal_y_map;
+
     // vectors with integrals
     Vector2D integral_Ni_vec;
     Vector2D integral_derivative_Ni_x_vec;
@@ -102,6 +106,7 @@ class IntegralTri3
 
     // functions for computing integrals for boundaries
     void evaluate_boundary_Ni_derivative();
+    void evaluate_boundary_normal();
     void evaluate_boundary_integral_Ni();
     void evaluate_boundary_integral_Ni_Nj();
 
@@ -401,6 +406,100 @@ void IntegralTri3::evaluate_boundary_Ni_derivative()
         // store in vectors
         boundary_jacobian_determinant_map[element_did][boundary_key] = jacobian_determinant_part_l_vec;
         boundary_N_map[element_did][boundary_key] = N_part_l_vec;
+
+    }
+
+}
+
+void IntegralTri3::evaluate_boundary_normal()
+{
+    /*
+
+    Calculates normal vectors at the boundaries.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */
+
+    // iterate for each element with a flux-type boundary condition
+    for (int indx_m = 0; indx_m < boundary_t3_ptr->num_element_flux_domain; indx_m++)
+    {
+
+        // get element global ID and point local IDs
+        int element_gid = boundary_t3_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_t3_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_t3_ptr->element_flux_pb_lid_vec[indx_m];
+
+        // get boundary key
+        // use a symmetric pairing function
+        // this indicates which edge the boundary is applied on
+        int helper_num = point_lid_a + point_lid_b + 1;
+        int boundary_key = (helper_num*helper_num - helper_num % 2)/4 + std::min(point_lid_a, point_lid_b);
+
+        // get coordinates of points defining the boundary
+
+        // get element local ID
+        int element_did = mesh_t3_ptr->element_gid_to_did_map[element_gid];
+
+        // get global ID of points around element
+        int p0_gid = mesh_t3_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_t3_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_t3_ptr->element_p2_gid_vec[element_did];
+
+        // get domain ID of points
+        int p0_did = mesh_t3_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_t3_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_t3_ptr->point_gid_to_did_map[p2_gid];
+
+        // get x values of points
+        double x0 = mesh_t3_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_t3_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_t3_ptr->point_position_x_vec[p2_did];
+        double x_arr[3] = {x0, x1, x2};
+
+        // get y values of points
+        double y0 = mesh_t3_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_t3_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_t3_ptr->point_position_y_vec[p2_did];
+        double y_arr[3] = {y0, y1, y2};
+
+        // determine outward unit normal vector
+
+        // get vector along boundary pointing counterclocwise
+        // start - stt; end - end
+        double x_stt = 0.; double y_stt = 0.;
+        double x_end = 0.; double y_end = 0.;    
+        switch (boundary_key)
+        {
+            case 1:  // bottom edge (0-1)
+                x_stt = x0; y_stt = y0;
+                x_end = x1; y_end = y1;
+            break;  
+            case 5:  // left edge (1-2)
+                x_stt = x1; y_stt = y1;
+                x_end = x2; y_end = y2;
+            break;  
+            case 2:  // hypotenouse (2-0)
+                x_stt = x2; y_stt = y2;
+                x_end = x0; y_end = y0;
+            break;  
+        }
+
+        // calculate normal to boundary vector
+        // should be pointing out of element
+        double boundarynormal_x = y_end - y_stt;
+        double boundarynormal_y = x_stt - x_end;
+
+        // calculate unit normal vector components
+        double boundarynormal_mag = sqrt(boundarynormal_x*boundarynormal_x + boundarynormal_y*boundarynormal_y);
+        boundary_normal_x_map[element_did][boundary_key] = boundarynormal_x/boundarynormal_mag;
+        boundary_normal_y_map[element_did][boundary_key] = boundarynormal_y/boundarynormal_mag;
 
     }
 

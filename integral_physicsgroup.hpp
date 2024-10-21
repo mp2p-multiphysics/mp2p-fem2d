@@ -62,6 +62,7 @@ class IntegralPhysicsGroup
 
     // functions for computing integrals for boundaries
     void evaluate_boundary_Ni_derivative();
+    void evaluate_boundary_normal();
     void evaluate_boundary_integral_Ni();
     void evaluate_boundary_integral_Ni_Nj();
 
@@ -134,6 +135,35 @@ void IntegralPhysicsGroup::evaluate_boundary_Ni_derivative()
     for (auto integral_ptr : integral_q4_ptr_vec)
     {
         integral_ptr->evaluate_boundary_Ni_derivative();
+    }
+
+}
+
+
+void IntegralPhysicsGroup::evaluate_boundary_normal()
+{
+    /*
+
+    Calculates normal vectors at the boundaries.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */
+
+    // evaluate integrals in each domain
+    for (auto integral_ptr : integral_t3_ptr_vec)
+    {
+        integral_ptr->evaluate_boundary_normal();
+    }
+    for (auto integral_ptr : integral_q4_ptr_vec)
+    {
+        integral_ptr->evaluate_boundary_normal();
     }
 
 }
