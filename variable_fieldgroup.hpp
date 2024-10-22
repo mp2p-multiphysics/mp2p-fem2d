@@ -14,9 +14,11 @@ class VariableFieldGroup
 
     Variables
     =========
-    variable_ptr_vec_in : vector<VariableBase*>
-        vector with pointers to VariableBase objects.
-    
+    variable_t3_ptr_vec_in : vector<VariableTri3*>
+        vector with pointers to VariableTri3 objects.
+    variable_q4_ptr_vec_in : vector<VariableQuad4*>
+        vector with pointers to VariableQuad4 objects.
+
     */
 
     public:

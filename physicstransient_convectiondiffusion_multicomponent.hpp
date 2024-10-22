@@ -35,17 +35,21 @@ class PhysicsTransientConvectionDiffusionMulticomponent : public PhysicsTransien
         Meshes where this physics is applied to.
     boundary_physics_ptr_vec_in : BoundaryPhysicsGroupVector
         Boundary conditions pertinent to this physics.
-    integral_physics_in : IntegralPhysicsGroup
+    integral_physics_ptr_vec_in : IntegralPhysicsGroupVector
         Test function integrals of the meshes.
     value_field_ptr_vec_in : VariableFieldGroupVector
-        u in a * du/dt = -div(-b * grad(u)) + c.
+        u in a * du/dt = -div(-b * grad(u) + u * v) + c.
         This will be solved for by the matrix equation.
     derivativecoefficient_field_ptr_vec_in : ScalarFieldGroupVector
-        a in a * du/dt = -div(-b * grad(u)) + c.
+        a in a * du/dt = -div(-b * grad(u) + u * v) + c.
     diffusioncoefficient_field_ptr_mat_in : ScalarFieldGroupMatrix
-        b in a * du/dt = -div(-b * grad(u)) + c.
+        b in a * du/dt = -div(-b * grad(u) + u * v) + c.
+    velocity_x_field_in : ScalarFieldGroup
+        x-component of v in a * du/dt = -div(-b * grad(u) + u * v) + c.
+    velocity_x_field_in : ScalarFieldGroup
+        y-component of v in a * du/dt = -div(-b * grad(u) + u * v) + c.
     generationcoefficient_field_ptr_vec_in : ScalarFieldGroupVector
-        c in a * du/dt = -div(-b * grad(u)) + c.
+        c in a * du/dt = -div(-b * grad(u) + u * v) + c.
 
     Functions
     =========

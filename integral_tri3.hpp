@@ -15,9 +15,9 @@ class IntegralTri3
 
     Variables
     =========
-    mesh_t3_in : MeshTri3
+    mesh_in : MeshTri3
         struct with mesh data.
-    boundary_t3_in : BoundaryTri3
+    boundary_in : BoundaryTri3
         object with boundary condition data.
 
     Functions
@@ -43,6 +43,15 @@ class IntegralTri3
         Calculates the integral of Ni * Nj * d(Nk)/dx.
     evaluate_integral_Ni_Nj_derivative_Nk_y : void
         Calculates the integral of Ni * Nj * d(Nk)/dy.
+    evaluate_boundary_Ni_derivative : void
+        Calculates test functions (N) and their derivatives at the boundaries.
+        Must be called before integrals are evaluated.
+    evaluate_boundary_normal : void
+        Calculates normal vectors at the boundaries.
+    evaluate_boundary_integral_Ni : void
+        Calculates the integral of Ni along a boundary.
+    evaluate_boundary_integral_Ni_Nj
+        Calculates the integral of Ni * Nj along a boundary.
 
     Notes
     ====
@@ -60,8 +69,8 @@ class IntegralTri3
     public:
     
     // mesh
-    MeshTri3 *mesh_t3_ptr;
-    BoundaryTri3 *boundary_t3_ptr;
+    MeshTri3 *mesh_ptr;
+    BoundaryTri3 *boundary_ptr;
 
     // vectors with test functions and derivatives
     Vector2D jacobian_determinant_vec;
@@ -117,10 +126,10 @@ class IntegralTri3
     }
 
     // constructor
-    IntegralTri3(MeshTri3 &mesh_t3_in, BoundaryTri3 &boundary_t3_in)
+    IntegralTri3(MeshTri3 &mesh_in, BoundaryTri3 &boundary_in)
     {
-        mesh_t3_ptr = &mesh_t3_in;
-        boundary_t3_ptr = &boundary_t3_in;
+        mesh_ptr = &mesh_in;
+        boundary_ptr = &boundary_in;
     }
 
 };
@@ -148,7 +157,7 @@ void IntegralTri3::evaluate_Ni_derivative()
     double b_arr[3] = {0.5, 0.0, 0.5};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++)
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++)
     {
 
         // initialize
@@ -158,24 +167,24 @@ void IntegralTri3::evaluate_Ni_derivative()
         Vector2D derivative_N_y_part_ml_vec;
 
         // get global ID of points around element
-        int p0_gid = mesh_t3_ptr->element_p0_gid_vec[element_did];
-        int p1_gid = mesh_t3_ptr->element_p1_gid_vec[element_did];
-        int p2_gid = mesh_t3_ptr->element_p2_gid_vec[element_did];
+        int p0_gid = mesh_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_ptr->element_p2_gid_vec[element_did];
 
         // get domain ID of points
-        int p0_did = mesh_t3_ptr->point_gid_to_did_map[p0_gid];
-        int p1_did = mesh_t3_ptr->point_gid_to_did_map[p1_gid];
-        int p2_did = mesh_t3_ptr->point_gid_to_did_map[p2_gid];
+        int p0_did = mesh_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_ptr->point_gid_to_did_map[p2_gid];
 
         // get x values of points
-        double x0 = mesh_t3_ptr->point_position_x_vec[p0_did];
-        double x1 = mesh_t3_ptr->point_position_x_vec[p1_did];
-        double x2 = mesh_t3_ptr->point_position_x_vec[p2_did];
+        double x0 = mesh_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_ptr->point_position_x_vec[p2_did];
 
         // get y values of points
-        double y0 = mesh_t3_ptr->point_position_y_vec[p0_did];
-        double y1 = mesh_t3_ptr->point_position_y_vec[p1_did];
-        double y2 = mesh_t3_ptr->point_position_y_vec[p2_did];
+        double y0 = mesh_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_ptr->point_position_y_vec[p2_did];
 
         // iterate for each integration point (indx_l)
         for (int indx_l = 0; indx_l < 3; indx_l++)
@@ -287,13 +296,13 @@ void IntegralTri3::evaluate_boundary_Ni_derivative()
     VectorDouble A_vec = {-M_1_SQRT_3, +M_1_SQRT_3};
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_t3_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and point local IDs
-        int element_gid = boundary_t3_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_t3_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_t3_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -304,28 +313,28 @@ void IntegralTri3::evaluate_boundary_Ni_derivative()
         // get coordinates of points defining the boundary
 
         // get element local ID
-        int element_did = mesh_t3_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_ptr->element_gid_to_did_map[element_gid];
 
         // get global ID of points around element
-        int p0_gid = mesh_t3_ptr->element_p0_gid_vec[element_did];
-        int p1_gid = mesh_t3_ptr->element_p1_gid_vec[element_did];
-        int p2_gid = mesh_t3_ptr->element_p2_gid_vec[element_did];
+        int p0_gid = mesh_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_ptr->element_p2_gid_vec[element_did];
 
         // get domain ID of points
-        int p0_did = mesh_t3_ptr->point_gid_to_did_map[p0_gid];
-        int p1_did = mesh_t3_ptr->point_gid_to_did_map[p1_gid];
-        int p2_did = mesh_t3_ptr->point_gid_to_did_map[p2_gid];
+        int p0_did = mesh_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_ptr->point_gid_to_did_map[p2_gid];
 
         // get x values of points
-        double x0 = mesh_t3_ptr->point_position_x_vec[p0_did];
-        double x1 = mesh_t3_ptr->point_position_x_vec[p1_did];
-        double x2 = mesh_t3_ptr->point_position_x_vec[p2_did];
+        double x0 = mesh_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_ptr->point_position_x_vec[p2_did];
         double x_arr[3] = {x0, x1, x2};
 
         // get y values of points
-        double y0 = mesh_t3_ptr->point_position_y_vec[p0_did];
-        double y1 = mesh_t3_ptr->point_position_y_vec[p1_did];
-        double y2 = mesh_t3_ptr->point_position_y_vec[p2_did];
+        double y0 = mesh_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_ptr->point_position_y_vec[p2_did];
         double y_arr[3] = {y0, y1, y2};
 
         // determine integration points used in gaussian integration
@@ -428,13 +437,13 @@ void IntegralTri3::evaluate_boundary_normal()
     */
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_t3_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and point local IDs
-        int element_gid = boundary_t3_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_t3_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_t3_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -445,28 +454,28 @@ void IntegralTri3::evaluate_boundary_normal()
         // get coordinates of points defining the boundary
 
         // get element local ID
-        int element_did = mesh_t3_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_ptr->element_gid_to_did_map[element_gid];
 
         // get global ID of points around element
-        int p0_gid = mesh_t3_ptr->element_p0_gid_vec[element_did];
-        int p1_gid = mesh_t3_ptr->element_p1_gid_vec[element_did];
-        int p2_gid = mesh_t3_ptr->element_p2_gid_vec[element_did];
+        int p0_gid = mesh_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_ptr->element_p2_gid_vec[element_did];
 
         // get domain ID of points
-        int p0_did = mesh_t3_ptr->point_gid_to_did_map[p0_gid];
-        int p1_did = mesh_t3_ptr->point_gid_to_did_map[p1_gid];
-        int p2_did = mesh_t3_ptr->point_gid_to_did_map[p2_gid];
+        int p0_did = mesh_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_ptr->point_gid_to_did_map[p2_gid];
 
         // get x values of points
-        double x0 = mesh_t3_ptr->point_position_x_vec[p0_did];
-        double x1 = mesh_t3_ptr->point_position_x_vec[p1_did];
-        double x2 = mesh_t3_ptr->point_position_x_vec[p2_did];
+        double x0 = mesh_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_ptr->point_position_x_vec[p2_did];
         double x_arr[3] = {x0, x1, x2};
 
         // get y values of points
-        double y0 = mesh_t3_ptr->point_position_y_vec[p0_did];
-        double y1 = mesh_t3_ptr->point_position_y_vec[p1_did];
-        double y2 = mesh_t3_ptr->point_position_y_vec[p2_did];
+        double y0 = mesh_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_ptr->point_position_y_vec[p2_did];
         double y_arr[3] = {y0, y1, y2};
 
         // determine outward unit normal vector
@@ -526,7 +535,7 @@ void IntegralTri3::evaluate_integral_Ni()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
@@ -568,7 +577,7 @@ void IntegralTri3::evaluate_integral_derivative_Ni_x()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
@@ -610,7 +619,7 @@ void IntegralTri3::evaluate_integral_derivative_Ni_y()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
@@ -652,7 +661,7 @@ void IntegralTri3::evaluate_integral_Ni_Nj()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
@@ -698,7 +707,7 @@ void IntegralTri3::evaluate_integral_Ni_derivative_Nj_x()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
@@ -744,7 +753,7 @@ void IntegralTri3::evaluate_integral_Ni_derivative_Nj_y()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
@@ -790,7 +799,7 @@ void IntegralTri3::evaluate_integral_div_Ni_dot_div_Nj()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
@@ -836,7 +845,7 @@ void IntegralTri3::evaluate_integral_Ni_Nj_derivative_Nk_x()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector3D integral_part_i_vec;
@@ -886,7 +895,7 @@ void IntegralTri3::evaluate_integral_Ni_Nj_derivative_Nk_y()
     double w_arr[3] = {M_1_6, M_1_6, M_1_6};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_t3_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector3D integral_part_i_vec;
@@ -938,15 +947,15 @@ void IntegralTri3::evaluate_boundary_integral_Ni()
     VectorDouble negative_vec = {-1., -1.};
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_t3_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and boundary key
 
         // get element global ID and point local IDs
-        int element_gid = boundary_t3_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_t3_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_t3_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -955,7 +964,7 @@ void IntegralTri3::evaluate_boundary_integral_Ni()
         int boundary_key = (helper_num*helper_num - helper_num % 2)/4 + std::min(point_lid_a, point_lid_b);
 
         // get element local ID
-        int element_did = mesh_t3_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_ptr->element_gid_to_did_map[element_gid];
     
         // calculate integrals
 
@@ -1001,15 +1010,15 @@ void IntegralTri3::evaluate_boundary_integral_Ni_Nj()
     VectorDouble negative_vec = {-1., -1.};
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_t3_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and boundary key
 
         // get element global ID and point local IDs
-        int element_gid = boundary_t3_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_t3_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_t3_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -1018,7 +1027,7 @@ void IntegralTri3::evaluate_boundary_integral_Ni_Nj()
         int boundary_key = (helper_num*helper_num - helper_num % 2)/4 + std::min(point_lid_a, point_lid_b);
 
         // get element local ID
-        int element_did = mesh_t3_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_ptr->element_gid_to_did_map[element_gid];
     
         // calculate integrals
 

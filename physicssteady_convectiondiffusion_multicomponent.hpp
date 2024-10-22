@@ -35,7 +35,7 @@ class PhysicsSteadyConvectionDiffusionMulticomponent : public PhysicsSteadyBase
         Meshes where this physics is applied to.
     boundary_physics_ptr_vec_in : BoundaryPhysicsGroupVector
         Boundary conditions pertinent to this physics.
-    integral_physics_in : IntegralPhysicsGroup
+    integral_physics_ptr_vec_in : IntegralPhysicsGroupVector
         Test function integrals of the meshes.
     value_field_ptr_vec_in : VariableFieldGroupVector
         u in 0 = -div(-b * grad(u)) + c.
@@ -43,7 +43,9 @@ class PhysicsSteadyConvectionDiffusionMulticomponent : public PhysicsSteadyBase
     diffusioncoefficient_field_ptr_mat_in : ScalarFieldGroupMatrix
         b in 0 = -div(-b * grad(u)) + c.
     velocity_x_field_in : ScalarFieldGroup
-        v in 0 = -div(-b * grad(u) + u * v) + c.
+        x-component of v in 0 = -div(-b * grad(u) + u * v) + c.
+    velocity_x_field_in : ScalarFieldGroup
+        y-component of v in 0 = -div(-b * grad(u) + u * v) + c.
     generationcoefficient_field_ptr_vec_in : ScalarFieldGroupVector
         c in 0 = -div(-b * grad(u)) + c.
 

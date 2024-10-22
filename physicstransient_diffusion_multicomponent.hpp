@@ -35,7 +35,7 @@ class PhysicsTransientDiffusionMulticomponent : public PhysicsTransientBase
         Meshes where this physics is applied to.
     boundary_physics_ptr_vec_in : BoundaryPhysicsGroupVector
         Boundary conditions pertinent to this physics.
-    integral_physics_in : IntegralPhysicsGroup
+    integral_physics_ptr_vec_in : IntegralPhysicsGroupVector
         Test function integrals of the meshes.
     value_field_ptr_vec_in : VariableFieldGroupVector
         u in a * du/dt = -div(-b * grad(u)) + c.

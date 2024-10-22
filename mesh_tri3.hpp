@@ -12,31 +12,21 @@ class MeshTri3
 
     Variables
     =========
-    num_point_domain : int
-        Number of points in the domain.
-    point_gid_vec : VectorInt
-        vector with global IDs of points in the domain.
-    point_position_x_vec : VectorDouble
-        vector with x-coordinates of points in the domain.
-    point_position_y_vec : VectorDouble
-        vector with y-coordinates of points in the domain.
-    point_gid_to_did_map : MapIntInt
-        map that outputs the global ID of a point given its domain ID.
-    num_element_domain : int
-        Number of elements in the domain.
-    element_gid_vec : VectorInt
-        vector with global IDs of elements in the domain.
-    element_p0_gid_vec : VectorInt
-        vector with global IDs of point 0 in the domain.
-    element_p1_gid_vec : VectorInt
-        vector with global IDs of point 1 in the domain.
-    element_p2_gid_vec : VectorInt
-        vector with global IDs of point 2 in the domain.
-    point_gid_to_did_map : MapIntInt
-        map that outputs the global ID of an element given its domain ID.
+    file_in_point_str : string
+        Path to CSV file with data for mesh points.
+    file_in_element_str : string
+        Path to CSV file with data for mesh elements.
 
     Notes
     ====
+    The CSV file with point data must have the following columns:
+        global point ID
+        x-coordinate of point
+    The CSV file with element data must have the following columns:
+        global element ID
+        global point ID of local point 0
+        global point ID of local point 1
+        global point ID of local point 2
     The global ID is a unique label for each point.
     The domain ID applies only to a domain and is used to iterate through the vectors in this code.
     The figure below is a tri3 element transformed into local coordinates. Points 0, 1, 2 are labeled.

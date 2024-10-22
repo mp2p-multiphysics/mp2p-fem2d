@@ -15,9 +15,9 @@ class IntegralQuad4
 
     Variables
     =========
-    mesh_q4_in : MeshQuad4
+    mesh_in : MeshQuad4
         struct with mesh data.
-    boundary_q4_in : BoundaryQuad4
+    boundary_in : BoundaryQuad4
         object with boundary condition data.
 
     Functions
@@ -43,6 +43,15 @@ class IntegralQuad4
         Calculates the integral of Ni * Nj * d(Nk)/dx.
     evaluate_integral_Ni_Nj_derivative_Nk_y : void
         Calculates the integral of Ni * Nj * d(Nk)/dy.
+    evaluate_boundary_Ni_derivative : void
+        Calculates test functions (N) and their derivatives at the boundaries.
+        Must be called before integrals are evaluated.
+    evaluate_boundary_normal : void
+        Calculates normal vectors at the boundaries.
+    evaluate_boundary_integral_Ni : void
+        Calculates the integral of Ni along a boundary.
+    evaluate_boundary_integral_Ni_Nj
+        Calculates the integral of Ni * Nj along a boundary.
 
     Notes
     ====
@@ -60,8 +69,8 @@ class IntegralQuad4
     public:
     
     // mesh
-    MeshQuad4 *mesh_q4_ptr;
-    BoundaryQuad4 *boundary_q4_ptr;
+    MeshQuad4 *mesh_ptr;
+    BoundaryQuad4 *boundary_ptr;
 
     // vectors with test functions and derivatives
     Vector2D jacobian_determinant_vec;
@@ -117,10 +126,10 @@ class IntegralQuad4
     }
 
     // constructor
-    IntegralQuad4(MeshQuad4 &mesh_q4_in, BoundaryQuad4 &boundary_q4_in)
+    IntegralQuad4(MeshQuad4 &mesh_in, BoundaryQuad4 &boundary_in)
     {
-        mesh_q4_ptr = &mesh_q4_in;
-        boundary_q4_ptr = &boundary_q4_in;
+        mesh_ptr = &mesh_in;
+        boundary_ptr = &boundary_in;
     }
 
 };
@@ -149,7 +158,7 @@ void IntegralQuad4::evaluate_Ni_derivative()
     double b_arr[4] = {+M_1_SQRT_3, -M_1_SQRT_3, +M_1_SQRT_3, -M_1_SQRT_3};
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++)
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++)
     {
 
         // initialize
@@ -159,28 +168,28 @@ void IntegralQuad4::evaluate_Ni_derivative()
         Vector2D derivative_N_y_part_ml_vec;
 
         // get global ID of points around element
-        int p0_gid = mesh_q4_ptr->element_p0_gid_vec[element_did];
-        int p1_gid = mesh_q4_ptr->element_p1_gid_vec[element_did];
-        int p2_gid = mesh_q4_ptr->element_p2_gid_vec[element_did];
-        int p3_gid = mesh_q4_ptr->element_p3_gid_vec[element_did];
+        int p0_gid = mesh_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_ptr->element_p2_gid_vec[element_did];
+        int p3_gid = mesh_ptr->element_p3_gid_vec[element_did];
 
         // get domain ID of points
-        int p0_did = mesh_q4_ptr->point_gid_to_did_map[p0_gid];
-        int p1_did = mesh_q4_ptr->point_gid_to_did_map[p1_gid];
-        int p2_did = mesh_q4_ptr->point_gid_to_did_map[p2_gid];
-        int p3_did = mesh_q4_ptr->point_gid_to_did_map[p3_gid];
+        int p0_did = mesh_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_ptr->point_gid_to_did_map[p2_gid];
+        int p3_did = mesh_ptr->point_gid_to_did_map[p3_gid];
 
         // get x values of points
-        double x0 = mesh_q4_ptr->point_position_x_vec[p0_did];
-        double x1 = mesh_q4_ptr->point_position_x_vec[p1_did];
-        double x2 = mesh_q4_ptr->point_position_x_vec[p2_did];
-        double x3 = mesh_q4_ptr->point_position_x_vec[p3_did];
+        double x0 = mesh_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_ptr->point_position_x_vec[p2_did];
+        double x3 = mesh_ptr->point_position_x_vec[p3_did];
 
         // get y values of points
-        double y0 = mesh_q4_ptr->point_position_y_vec[p0_did];
-        double y1 = mesh_q4_ptr->point_position_y_vec[p1_did];
-        double y2 = mesh_q4_ptr->point_position_y_vec[p2_did];
-        double y3 = mesh_q4_ptr->point_position_y_vec[p3_did];
+        double y0 = mesh_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_ptr->point_position_y_vec[p2_did];
+        double y3 = mesh_ptr->point_position_y_vec[p3_did];
 
         // iterate for each integration point (indx_l)
         for (int indx_l = 0; indx_l < 4; indx_l++)
@@ -295,13 +304,13 @@ void IntegralQuad4::evaluate_boundary_Ni_derivative()
     VectorDouble A_vec = {-M_1_SQRT_3, +M_1_SQRT_3};
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_q4_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and point local IDs
-        int element_gid = boundary_q4_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_q4_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_q4_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -312,32 +321,32 @@ void IntegralQuad4::evaluate_boundary_Ni_derivative()
         // get coordinates of points defining the boundary
 
         // get element local ID
-        int element_did = mesh_q4_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_ptr->element_gid_to_did_map[element_gid];
 
         // get global ID of points around element
-        int p0_gid = mesh_q4_ptr->element_p0_gid_vec[element_did];
-        int p1_gid = mesh_q4_ptr->element_p1_gid_vec[element_did];
-        int p2_gid = mesh_q4_ptr->element_p2_gid_vec[element_did];
-        int p3_gid = mesh_q4_ptr->element_p3_gid_vec[element_did];
+        int p0_gid = mesh_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_ptr->element_p2_gid_vec[element_did];
+        int p3_gid = mesh_ptr->element_p3_gid_vec[element_did];
 
         // get domain ID of points
-        int p0_did = mesh_q4_ptr->point_gid_to_did_map[p0_gid];
-        int p1_did = mesh_q4_ptr->point_gid_to_did_map[p1_gid];
-        int p2_did = mesh_q4_ptr->point_gid_to_did_map[p2_gid];
-        int p3_did = mesh_q4_ptr->point_gid_to_did_map[p3_gid];
+        int p0_did = mesh_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_ptr->point_gid_to_did_map[p2_gid];
+        int p3_did = mesh_ptr->point_gid_to_did_map[p3_gid];
 
         // get x values of points
-        double x0 = mesh_q4_ptr->point_position_x_vec[p0_did];
-        double x1 = mesh_q4_ptr->point_position_x_vec[p1_did];
-        double x2 = mesh_q4_ptr->point_position_x_vec[p2_did];
-        double x3 = mesh_q4_ptr->point_position_x_vec[p3_did];
+        double x0 = mesh_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_ptr->point_position_x_vec[p2_did];
+        double x3 = mesh_ptr->point_position_x_vec[p3_did];
         double x_arr[4] = {x0, x1, x2, x3};
 
         // get y values of points
-        double y0 = mesh_q4_ptr->point_position_y_vec[p0_did];
-        double y1 = mesh_q4_ptr->point_position_y_vec[p1_did];
-        double y2 = mesh_q4_ptr->point_position_y_vec[p2_did];
-        double y3 = mesh_q4_ptr->point_position_y_vec[p3_did];
+        double y0 = mesh_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_ptr->point_position_y_vec[p2_did];
+        double y3 = mesh_ptr->point_position_y_vec[p3_did];
         double y_arr[4] = {y0, y1, y2, y3};
 
         // determine integration points used in gaussian integration
@@ -442,13 +451,13 @@ void IntegralQuad4::evaluate_boundary_normal()
     */
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_q4_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and point local IDs
-        int element_gid = boundary_q4_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_q4_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_q4_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -459,32 +468,32 @@ void IntegralQuad4::evaluate_boundary_normal()
         // get coordinates of points defining the boundary
 
         // get element local ID
-        int element_did = mesh_q4_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_ptr->element_gid_to_did_map[element_gid];
 
         // get global ID of points around element
-        int p0_gid = mesh_q4_ptr->element_p0_gid_vec[element_did];
-        int p1_gid = mesh_q4_ptr->element_p1_gid_vec[element_did];
-        int p2_gid = mesh_q4_ptr->element_p2_gid_vec[element_did];
-        int p3_gid = mesh_q4_ptr->element_p3_gid_vec[element_did];
+        int p0_gid = mesh_ptr->element_p0_gid_vec[element_did];
+        int p1_gid = mesh_ptr->element_p1_gid_vec[element_did];
+        int p2_gid = mesh_ptr->element_p2_gid_vec[element_did];
+        int p3_gid = mesh_ptr->element_p3_gid_vec[element_did];
 
         // get domain ID of points
-        int p0_did = mesh_q4_ptr->point_gid_to_did_map[p0_gid];
-        int p1_did = mesh_q4_ptr->point_gid_to_did_map[p1_gid];
-        int p2_did = mesh_q4_ptr->point_gid_to_did_map[p2_gid];
-        int p3_did = mesh_q4_ptr->point_gid_to_did_map[p3_gid];
+        int p0_did = mesh_ptr->point_gid_to_did_map[p0_gid];
+        int p1_did = mesh_ptr->point_gid_to_did_map[p1_gid];
+        int p2_did = mesh_ptr->point_gid_to_did_map[p2_gid];
+        int p3_did = mesh_ptr->point_gid_to_did_map[p3_gid];
 
         // get x values of points
-        double x0 = mesh_q4_ptr->point_position_x_vec[p0_did];
-        double x1 = mesh_q4_ptr->point_position_x_vec[p1_did];
-        double x2 = mesh_q4_ptr->point_position_x_vec[p2_did];
-        double x3 = mesh_q4_ptr->point_position_x_vec[p3_did];
+        double x0 = mesh_ptr->point_position_x_vec[p0_did];
+        double x1 = mesh_ptr->point_position_x_vec[p1_did];
+        double x2 = mesh_ptr->point_position_x_vec[p2_did];
+        double x3 = mesh_ptr->point_position_x_vec[p3_did];
         double x_arr[4] = {x0, x1, x2, x3};
 
         // get y values of points
-        double y0 = mesh_q4_ptr->point_position_y_vec[p0_did];
-        double y1 = mesh_q4_ptr->point_position_y_vec[p1_did];
-        double y2 = mesh_q4_ptr->point_position_y_vec[p2_did];
-        double y3 = mesh_q4_ptr->point_position_y_vec[p3_did];
+        double y0 = mesh_ptr->point_position_y_vec[p0_did];
+        double y1 = mesh_ptr->point_position_y_vec[p1_did];
+        double y2 = mesh_ptr->point_position_y_vec[p2_did];
+        double y3 = mesh_ptr->point_position_y_vec[p3_did];
         double y_arr[4] = {y0, y1, y2, y3};
 
         // determine outward unit normal vector
@@ -544,7 +553,7 @@ void IntegralQuad4::evaluate_integral_Ni()
     */
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
@@ -582,7 +591,7 @@ void IntegralQuad4::evaluate_integral_derivative_Ni_x()
     */
     
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
@@ -620,7 +629,7 @@ void IntegralQuad4::evaluate_integral_derivative_Ni_y()
     */
     
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector1D integral_part_i_vec;
@@ -658,7 +667,7 @@ void IntegralQuad4::evaluate_integral_Ni_Nj()
     */
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
@@ -700,7 +709,7 @@ void IntegralQuad4::evaluate_integral_Ni_derivative_Nj_x()
     */
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
@@ -742,7 +751,7 @@ void IntegralQuad4::evaluate_integral_Ni_derivative_Nj_y()
     */
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
@@ -784,7 +793,7 @@ void IntegralQuad4::evaluate_integral_div_Ni_dot_div_Nj()
     */
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector2D integral_part_i_vec;
@@ -826,7 +835,7 @@ void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_x()
     */
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector3D integral_part_i_vec;
@@ -872,7 +881,7 @@ void IntegralQuad4::evaluate_integral_Ni_Nj_derivative_Nk_y()
     */
 
     // iterate for each domain element
-    for (int element_did = 0; element_did < mesh_q4_ptr->num_element_domain; element_did++){  
+    for (int element_did = 0; element_did < mesh_ptr->num_element_domain; element_did++){  
     
     // iterate for each test function combination
     Vector3D integral_part_i_vec;
@@ -918,15 +927,15 @@ void IntegralQuad4::evaluate_boundary_integral_Ni()
     */
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_q4_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and boundary key
 
         // get element global ID and point local IDs
-        int element_gid = boundary_q4_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_q4_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_q4_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -935,7 +944,7 @@ void IntegralQuad4::evaluate_boundary_integral_Ni()
         int boundary_key = (helper_num*helper_num - helper_num % 2)/4 + std::min(point_lid_a, point_lid_b);
 
         // get element local ID
-        int element_did = mesh_q4_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_ptr->element_gid_to_did_map[element_gid];
     
         // calculate integrals
 
@@ -975,15 +984,15 @@ void IntegralQuad4::evaluate_boundary_integral_Ni_Nj()
     */
 
     // iterate for each element with a flux-type boundary condition
-    for (int indx_m = 0; indx_m < boundary_q4_ptr->num_element_flux_domain; indx_m++)
+    for (int indx_m = 0; indx_m < boundary_ptr->num_element_flux_domain; indx_m++)
     {
 
         // get element global ID and boundary key
 
         // get element global ID and point local IDs
-        int element_gid = boundary_q4_ptr->element_flux_gid_vec[indx_m];
-        int point_lid_a = boundary_q4_ptr->element_flux_pa_lid_vec[indx_m];
-        int point_lid_b = boundary_q4_ptr->element_flux_pb_lid_vec[indx_m];
+        int element_gid = boundary_ptr->element_flux_gid_vec[indx_m];
+        int point_lid_a = boundary_ptr->element_flux_pa_lid_vec[indx_m];
+        int point_lid_b = boundary_ptr->element_flux_pb_lid_vec[indx_m];
 
         // get boundary key
         // use a symmetric pairing function
@@ -992,7 +1001,7 @@ void IntegralQuad4::evaluate_boundary_integral_Ni_Nj()
         int boundary_key = (helper_num*helper_num - helper_num % 2)/4 + std::min(point_lid_a, point_lid_b);
 
         // get element local ID
-        int element_did = mesh_q4_ptr->element_gid_to_did_map[element_gid];
+        int element_did = mesh_ptr->element_gid_to_did_map[element_gid];
     
         // calculate integrals
 

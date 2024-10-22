@@ -12,8 +12,10 @@ class IntegralPhysicsGroup
 
     Variables
     =========
-    integral_ptr_vec_in : vector<IntegralBase*>
-        vector with pointers to IntegralBase objects.
+    integral_t3_ptr_vec_in : vector<IntegralTri3*>
+        vector with pointers to IntegralTri3 objects.
+    integral_q4_ptr_vec_in : vector<IntegralQuad4*>
+        vector with pointers to IntegralQuad4 objects.
 
     Functions
     =========
@@ -38,6 +40,15 @@ class IntegralPhysicsGroup
         Calculates the integral of Ni * Nj * d(Nk)/dx.
     evaluate_integral_Ni_Nj_derivative_Nk_y : void
         Calculates the integral of Ni * Nj * d(Nk)/dy.
+    evaluate_boundary_Ni_derivative : void
+        Calculates test functions (N) and their derivatives at the boundaries.
+        Must be called before integrals are evaluated.
+    evaluate_boundary_normal : void
+        Calculates normal vectors at the boundaries.
+    evaluate_boundary_integral_Ni : void
+        Calculates the integral of Ni along a boundary.
+    evaluate_boundary_integral_Ni_Nj
+        Calculates the integral of Ni * Nj along a boundary.
 
     */
 

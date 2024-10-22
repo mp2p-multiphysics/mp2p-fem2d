@@ -13,7 +13,7 @@ class VariableTri3
 
     Variables
     =========
-    mesh_t3_in : MeshTri3
+    mesh_in : MeshTri3
         Mesh where variable value is applied.
     u_init_in : double
         Initial value of the variable.
@@ -32,7 +32,7 @@ class VariableTri3
     VectorDouble point_value_vec;  // key: domain ID; value: value
     
     // mesh where variable is applied
-    MeshTri3* mesh_t3_ptr;  
+    MeshTri3* mesh_ptr;  
 
     // functions
     void output_csv(std::string file_out_str);
@@ -45,14 +45,14 @@ class VariableTri3
     }
 
     // constructor
-    VariableTri3(MeshTri3 &mesh_t3_in, double u_init_in)
+    VariableTri3(MeshTri3 &mesh_in, double u_init_in)
     {
 
         // store mesh
-        mesh_t3_ptr = &mesh_t3_in;
+        mesh_ptr = &mesh_in;
 
         // get number of domain points
-        num_point_domain = mesh_t3_ptr->num_point_domain;
+        num_point_domain = mesh_ptr->num_point_domain;
 
         // populate value vector with initial values
         for (int point_did = 0; point_did < num_point_domain; point_did++)
@@ -92,9 +92,9 @@ void VariableTri3::output_csv(std::string file_out_str)
     file_out_stream << "gid,position_x,position_y,value\n";
     for (int point_did = 0; point_did < num_point_domain; point_did++)
     {
-        file_out_stream << mesh_t3_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_t3_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_t3_ptr->point_position_y_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_gid_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_position_x_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_position_y_vec[point_did] << ",";
         file_out_stream << point_value_vec[point_did] << "\n";
     }
 
@@ -149,9 +149,9 @@ void VariableTri3::output_csv(std::string file_out_base_str, int ts)
     file_out_stream << "gid,position_x,position_y,value\n";
     for (int point_did = 0; point_did < num_point_domain; point_did++)
     {
-        file_out_stream << mesh_t3_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_t3_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_t3_ptr->point_position_y_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_gid_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_position_x_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_position_y_vec[point_did] << ",";
         file_out_stream << point_value_vec[point_did] << "\n";
     }
 

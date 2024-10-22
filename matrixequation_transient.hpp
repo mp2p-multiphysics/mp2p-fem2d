@@ -149,12 +149,12 @@ class MatrixEquationTransient
             {
 
                 // iterate through each global ID
-                for (auto point_gid : variable_ptr->mesh_t3_ptr->point_gid_vec)
+                for (auto point_gid : variable_ptr->mesh_ptr->point_gid_vec)
                 {
 
                     // get domain and field IDs
                     int point_fid = variable_field_ptr->point_gid_to_fid_map[point_gid];
-                    int point_did = variable_ptr->mesh_t3_ptr->point_gid_to_did_map[point_gid];
+                    int point_did = variable_ptr->mesh_ptr->point_gid_to_did_map[point_gid];
 
                     // get value from variable
                     double value = variable_ptr->point_value_vec[point_did];
@@ -172,12 +172,12 @@ class MatrixEquationTransient
             {
 
                 // iterate through each global ID
-                for (auto point_gid : variable_ptr->mesh_q4_ptr->point_gid_vec)
+                for (auto point_gid : variable_ptr->mesh_ptr->point_gid_vec)
                 {
 
                     // get domain and field IDs
                     int point_fid = variable_field_ptr->point_gid_to_fid_map[point_gid];
-                    int point_did = variable_ptr->mesh_q4_ptr->point_gid_to_did_map[point_gid];
+                    int point_did = variable_ptr->mesh_ptr->point_gid_to_did_map[point_gid];
 
                     // get value from variable
                     double value = variable_ptr->point_value_vec[point_did];
@@ -282,12 +282,12 @@ void MatrixEquationTransient::store_solution()
         {
 
             // iterate through each global ID
-            for (auto point_gid : variable_ptr->mesh_t3_ptr->point_gid_vec)
+            for (auto point_gid : variable_ptr->mesh_ptr->point_gid_vec)
             {
 
                 // get domain and field IDs
                 int point_fid = variable_field_ptr->point_gid_to_fid_map[point_gid];
-                int point_did = variable_ptr->mesh_t3_ptr->point_gid_to_did_map[point_gid];
+                int point_did = variable_ptr->mesh_ptr->point_gid_to_did_map[point_gid];
 
                 // get value from x_vec
                 int vec_row = start_row + point_fid;
@@ -305,12 +305,12 @@ void MatrixEquationTransient::store_solution()
         {
 
             // iterate through each global ID
-            for (auto point_gid : variable_ptr->mesh_q4_ptr->point_gid_vec)
+            for (auto point_gid : variable_ptr->mesh_ptr->point_gid_vec)
             {
 
                 // get domain and field IDs
                 int point_fid = variable_field_ptr->point_gid_to_fid_map[point_gid];
-                int point_did = variable_ptr->mesh_q4_ptr->point_gid_to_did_map[point_gid];
+                int point_did = variable_ptr->mesh_ptr->point_gid_to_did_map[point_gid];
 
                 // get value from x_vec
                 int vec_row = start_row + point_fid;

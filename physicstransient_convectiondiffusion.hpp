@@ -34,7 +34,9 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
     diffusioncoefficient_field_in : ScalarFieldGroup
         b in a * du/dt = -div(-b * grad(u) + u * v) + c.
     velocity_x_field_in : ScalarFieldGroup
-        v in a * du/dt = -div(-b * grad(u) + u * v) + c.
+        x-component of v in a * du/dt = -div(-b * grad(u) + u * v) + c.
+    velocity_x_field_in : ScalarFieldGroup
+        y-component of v in a * du/dt = -div(-b * grad(u) + u * v) + c.
     generationcoefficient_field_in : ScalarFieldGroup
         c in a * du/dt = -div(-b * grad(u) + u * v) + c.
 

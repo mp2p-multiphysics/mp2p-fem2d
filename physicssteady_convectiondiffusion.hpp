@@ -32,7 +32,9 @@ class PhysicsSteadyConvectionDiffusion : public PhysicsSteadyBase
     diffusioncoefficient_field_in : ScalarFieldGroup
         b in 0 = -div(-b * grad(u) + u * v) + c.
     velocity_x_field_in : ScalarFieldGroup
-        v in 0 = -div(-b * grad(u) + u * v) + c.
+        x-component of v in 0 = -div(-b * grad(u) + u * v) + c.
+    velocity_x_field_in : ScalarFieldGroup
+        y-component of v in 0 = -div(-b * grad(u) + u * v) + c.
     generationcoefficient_field_in : ScalarFieldGroup
         c in 0 = -div(-b * grad(u) + u * v) + c.
 

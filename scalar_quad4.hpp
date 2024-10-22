@@ -12,7 +12,7 @@ class ScalarQuad4
 
     Variables
     =========
-    mesh_q4_in : MeshQuad4
+    mesh_in : MeshQuad4
         Mesh where scalar value is applied.
     u_init_in : double
         Initial value of the scalar.
@@ -31,7 +31,7 @@ class ScalarQuad4
     VectorDouble point_value_vec;  // key: domain ID; value: value
     
     // mesh where variable is applied
-    MeshQuad4* mesh_q4_ptr;  
+    MeshQuad4* mesh_ptr;  
 
     // functions
     void output_csv(std::string file_out_str);
@@ -44,14 +44,14 @@ class ScalarQuad4
     }
 
     // constructor
-    ScalarQuad4(MeshQuad4 &mesh_q4_in, double u_init_in)
+    ScalarQuad4(MeshQuad4 &mesh_in, double u_init_in)
     {
 
         // store mesh
-        mesh_q4_ptr = &mesh_q4_in;
+        mesh_ptr = &mesh_in;
 
         // get number of domain points
-        num_point_domain = mesh_q4_ptr->num_point_domain;
+        num_point_domain = mesh_ptr->num_point_domain;
 
         // populate initial values
         for (int point_did = 0; point_did < num_point_domain; point_did++)
@@ -91,9 +91,9 @@ void ScalarQuad4::output_csv(std::string file_out_str)
     file_out_stream << "gid,position_x,position_y,value\n";
     for (int point_did = 0; point_did < num_point_domain; point_did++)
     {
-        file_out_stream << mesh_q4_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_q4_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_q4_ptr->point_position_y_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_gid_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_position_x_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_position_y_vec[point_did] << ",";
         file_out_stream << point_value_vec[point_did] << "\n";
     }
 
@@ -148,9 +148,9 @@ void ScalarQuad4::output_csv(std::string file_out_base_str, int ts)
     file_out_stream << "gid,position_x,position_y,value\n";
     for (int point_did = 0; point_did < num_point_domain; point_did++)
     {
-        file_out_stream << mesh_q4_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_q4_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_q4_ptr->point_position_y_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_gid_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_position_x_vec[point_did] << ",";
+        file_out_stream << mesh_ptr->point_position_y_vec[point_did] << ",";
         file_out_stream << point_value_vec[point_did] << "\n";
     }
 
