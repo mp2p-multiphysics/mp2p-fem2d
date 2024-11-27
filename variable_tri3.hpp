@@ -2,20 +2,23 @@
 #define VARIABLE_TRI3
 #include <fstream>
 #include <sstream>
+#include "domain_tri3.hpp"
 #include "container_typedef.hpp"
-#include "mesh_tri3.hpp"
+
+namespace FEM2D
+{
 
 class VariableTri3
 {
     /*
 
-    Variable applied over tri3 mesh elements.
+    Variable applied over tri3 domain elements.
 
     Variables
     =========
-    mesh_in : MeshTri3
-        Mesh where variable value is applied.
-    u_init_in : double
+    domain_in : DomainTri3
+        Domain where variable is applied.
+    value_initial_in : double
         Initial value of the variable.
 
     Functions
@@ -28,36 +31,33 @@ class VariableTri3
     public:
 
     // values in variable
-    int num_point_domain = 0;  // number of points in domain
+    int num_point = 0;  // number of points in domain
     VectorDouble point_value_vec;  // key: domain ID; value: value
     
-    // mesh where variable is applied
-    MeshTri3* mesh_ptr;  
+    // domain where variable is applied
+    DomainTri3* domain_ptr;  
 
     // functions
     void output_csv(std::string file_out_str);
     void output_csv(std::string file_out_base_str, int ts);
 
     // default constructor
-    VariableTri3()
-    {
-
-    }
+    VariableTri3() {}
 
     // constructor
-    VariableTri3(MeshTri3 &mesh_in, double u_init_in)
+    VariableTri3(DomainTri3 &domain_in, double value_initial_in)
     {
 
-        // store mesh
-        mesh_ptr = &mesh_in;
+        // store domain
+        domain_ptr = &domain_in;
 
         // get number of domain points
-        num_point_domain = mesh_ptr->num_point_domain;
+        num_point = domain_ptr->num_point;
 
         // populate value vector with initial values
-        for (int point_did = 0; point_did < num_point_domain; point_did++)
+        for (int pdid = 0; pdid < num_point; pdid++)
         {
-            point_value_vec.push_back(u_init_in);
+            point_value_vec.push_back(value_initial_in);
         }
 
     }
@@ -90,12 +90,12 @@ void VariableTri3::output_csv(std::string file_out_str)
 
     // write to file
     file_out_stream << "gid,position_x,position_y,value\n";
-    for (int point_did = 0; point_did < num_point_domain; point_did++)
+    for (int pdid = 0; pdid < num_point; pdid++)
     {
-        file_out_stream << mesh_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_ptr->point_position_y_vec[point_did] << ",";
-        file_out_stream << point_value_vec[point_did] << "\n";
+        file_out_stream << domain_ptr->point_pdid_to_pgid_vec[pdid] << ",";
+        file_out_stream << domain_ptr->point_position_x_vec[pdid] << ",";
+        file_out_stream << domain_ptr->point_position_y_vec[pdid] << ",";
+        file_out_stream << point_value_vec[pdid] << "\n";
     }
 
 }
@@ -147,13 +147,15 @@ void VariableTri3::output_csv(std::string file_out_base_str, int ts)
 
     // write to file
     file_out_stream << "gid,position_x,position_y,value\n";
-    for (int point_did = 0; point_did < num_point_domain; point_did++)
+    for (int pdid = 0; pdid < num_point; pdid++)
     {
-        file_out_stream << mesh_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_ptr->point_position_y_vec[point_did] << ",";
-        file_out_stream << point_value_vec[point_did] << "\n";
+        file_out_stream << domain_ptr->point_pdid_to_pgid_vec[pdid] << ",";
+        file_out_stream << domain_ptr->point_position_x_vec[pdid] << ",";
+        file_out_stream << domain_ptr->point_position_y_vec[pdid] << ",";
+        file_out_stream << point_value_vec[pdid] << "\n";
     }
+
+}
 
 }
 

@@ -1,21 +1,25 @@
-#ifndef MESH_TRI3
-#define MESH_TRI3
+#ifndef DOMAIN_QUAD4
+#define DOMAIN_QUAD4
+#include <fstream>
+#include <sstream>
 #include <unordered_map>
 #include "container_typedef.hpp"
 
+namespace FEM2D
+{
 
-class MeshTri3
+class DomainQuad4
 {
     /*
 
-    Mesh domain made of tri3 elements.
+    Domain made of line2 elements.
 
     Variables
     =========
-    file_in_point_str : string
-        Path to CSV file with data for mesh points.
-    file_in_element_str : string
-        Path to CSV file with data for mesh elements.
+    file_in_point_str_in : string
+        Path to CSV file with data for domain points.
+    file_in_element_str_in : string
+        Path to CSV file with data for domain elements.
 
     Notes
     ====
@@ -26,27 +30,13 @@ class MeshTri3
         global element ID
         global point ID of local point 0
         global point ID of local point 1
-        global point ID of local point 2
-    The global ID is a unique label for each point.
-    The domain ID applies only to a domain and is used to iterate through the vectors in this code.
-    The figure below is a tri3 element transformed into local coordinates. Points 0, 1, 2 are labeled.
-
-          (local y)
-             ^
-             |
-             2 \
-             |   \
-             |     \
-             |       \
-        <----1---------0------> (local x)
-             |
-             v
+    Point 0 and 1 refer to the left and right points of each element.
 
     */
 
-    // did - domain ID
-    // gid - global ID
-    // vectors use did as input
+    // pdid - point domain ID
+    // pgid - point global ID
+    // vectors use pdid as input
 
     public:
 
@@ -55,28 +45,26 @@ class MeshTri3
     std::string file_in_element_str;
 
     // point data
-    int num_point_domain = 0;
-    VectorInt point_gid_vec;
+    int num_point = 0;
+    VectorInt point_pdid_to_pgid_vec;
+    MapIntInt point_pgid_to_pdid_map;
     VectorDouble point_position_x_vec;
     VectorDouble point_position_y_vec;
-    MapIntInt point_gid_to_did_map;
 
     // element data
-    int num_element_domain = 0;
-    VectorInt element_gid_vec;
-    VectorInt element_p0_gid_vec;
-    VectorInt element_p1_gid_vec;
-    VectorInt element_p2_gid_vec;
-    MapIntInt element_gid_to_did_map;
+    int num_element = 0;
+    VectorInt element_edid_to_egid_vec;
+    MapIntInt element_egid_to_edid_map;
+    VectorInt element_p0_pgid_vec;
+    VectorInt element_p1_pgid_vec;
+    VectorInt element_p2_pgid_vec;
+    VectorInt element_p3_pgid_vec;
 
     // default constructor
-    MeshTri3 ()
-    {
+    DomainQuad4() {}
 
-    }
-
-    // construcotr
-    MeshTri3 (std::string file_in_point_str_in, std::string file_in_element_str_in)
+    // constructor
+    DomainQuad4(std::string file_in_point_str_in, std::string file_in_element_str_in)
     {
 
         // store variables
@@ -84,20 +72,20 @@ class MeshTri3
         file_in_element_str = file_in_element_str_in;
 
         // read csv files
-        read_mesh_point(file_in_point_str);
-        read_mesh_element(file_in_element_str);
+        read_domain_point(file_in_point_str);
+        read_domain_element(file_in_element_str);
 
     }
-
+    
     private:
 
     // functions
-    void read_mesh_point(std::string file_in_point_str);
-    void read_mesh_element(std::string file_in_element_str);
+    void read_domain_point(std::string file_in_point_str);
+    void read_domain_element(std::string file_in_element_str);
 
 };
 
-void MeshTri3::read_mesh_point(std::string file_in_point_str)
+void DomainQuad4::read_domain_point(std::string file_in_point_str)
 {
 
     // read file with points
@@ -118,8 +106,8 @@ void MeshTri3::read_mesh_point(std::string file_in_point_str)
             continue;
         }
 
-        // count number of particles
-        num_point_domain++;
+        // count number of points
+        num_point++;
 
         // convert line string into stringstream
         std::stringstream line_point_stream(line_point_str);
@@ -135,7 +123,7 @@ void MeshTri3::read_mesh_point(std::string file_in_point_str)
             // store values in appropriate vector
             switch (value_point_num)
             {
-                case 0: point_gid_vec.push_back(std::stoi(value_point_str)); break;
+                case 0: point_pdid_to_pgid_vec.push_back(std::stoi(value_point_str)); break;
                 case 1: point_position_x_vec.push_back(std::stod(value_point_str)); break;
                 case 2: point_position_y_vec.push_back(std::stod(value_point_str)); break;
             }
@@ -151,15 +139,15 @@ void MeshTri3::read_mesh_point(std::string file_in_point_str)
     file_in_point_stream.close();
 
     // generate map of global to domain ID for points
-    for (int point_did = 0; point_did < num_point_domain; point_did++)
+    for (int pdid = 0; pdid < num_point; pdid++)
     {
-        int point_gid = point_gid_vec[point_did];
-        point_gid_to_did_map[point_gid] = point_did;
+        int pgid = point_pdid_to_pgid_vec[pdid];
+        point_pgid_to_pdid_map[pgid] = pdid;
     }
 
 }
 
-void MeshTri3::read_mesh_element(std::string file_in_element_str)
+void DomainQuad4::read_domain_element(std::string file_in_element_str)
 {
 
     // read file with elements
@@ -180,8 +168,8 @@ void MeshTri3::read_mesh_element(std::string file_in_element_str)
             continue;
         }
 
-        // count number of particles
-        num_element_domain++;
+        // count number of elements
+        num_element++;
 
         // convert line string into stringstream
         std::stringstream line_element_stream(line_element_str);
@@ -197,10 +185,11 @@ void MeshTri3::read_mesh_element(std::string file_in_element_str)
             // store values in appropriate vector
             switch (value_element_num)
             {
-                case 0: element_gid_vec.push_back(std::stoi(value_element_str)); break;
-                case 1: element_p0_gid_vec.push_back(std::stod(value_element_str)); break;
-                case 2: element_p1_gid_vec.push_back(std::stod(value_element_str)); break;
-                case 3: element_p2_gid_vec.push_back(std::stod(value_element_str)); break;
+                case 0: element_edid_to_egid_vec.push_back(std::stoi(value_element_str)); break;
+                case 1: element_p0_pgid_vec.push_back(std::stod(value_element_str)); break;
+                case 2: element_p1_pgid_vec.push_back(std::stod(value_element_str)); break;
+                case 3: element_p2_pgid_vec.push_back(std::stod(value_element_str)); break;
+                case 4: element_p3_pgid_vec.push_back(std::stod(value_element_str)); break;
             }
 
             // increment value count
@@ -214,11 +203,13 @@ void MeshTri3::read_mesh_element(std::string file_in_element_str)
     file_in_element_stream.close();
 
     // generate map of global to domain ID for elements
-    for (int element_did = 0; element_did < num_element_domain; element_did++)
+    for (int edid = 0; edid < num_element; edid++)
     {
-        int element_gid = element_gid_vec[element_did];
-        element_gid_to_did_map[element_gid] = element_did;
+        int egid = element_edid_to_egid_vec[edid];
+        element_egid_to_edid_map[egid] = edid;
     }
+
+}
 
 }
 

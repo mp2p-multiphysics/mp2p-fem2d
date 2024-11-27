@@ -1,63 +1,105 @@
 #ifndef SCALAR_QUAD4
 #define SCALAR_QUAD4
+#include <fstream>
+#include <sstream>
+#include <functional>
 #include "container_typedef.hpp"
-#include "mesh_quad4.hpp"
+#include "domain_quad4.hpp"
+#include "variable_quad4.hpp"
 
+namespace FEM2D
+{
 
 class ScalarQuad4
 {
     /*
 
-    Scalar applied over quad4 mesh elements.
+    Scalar applied over quad4 domain elements.
 
-    Variables
+    Variables (for constant values)
     =========
-    mesh_in : MeshQuad4
-        Mesh where scalar value is applied.
-    u_init_in : double
-        Initial value of the scalar.
+    domain_in : DomainQuad4
+        Domain where scalar value is applied.
+    value_constant_in : double
+        Value of the scalar.
+
+    Variables (for non-constant values)
+    =========
+    domain_in : DomainQuad4
+        Domain where scalar value is applied.
+    value_function_in : function(double, VectorDouble) -> double
+        Function used to compute scalar values based on variable values.
+    variable_ptr_vec_in : vector<VariableQuad4*>
+        vector of pointers to variable objects needed to compute scalar values.
 
     Functions
     =========
     output_csv : void
         Outputs a CSV file with the values of the scalar.
+    update_value : void
+        Recalculates non-constant values.
+
+    Notes
+    ====
+    The inputs to the value function are the x-coordinate (double) and vector of variable values (VectorDouble) at a specified point.
+        The variable values are in the same order as the variables in variable_ptr_vec.
+    The output of the value function is the value of the scalar.
 
     */
 
     public:
 
-    // values in variable
-    int num_point_domain = 0;  // number of points in domain
-    VectorDouble point_value_vec;  // key: domain ID; value: value
-    
-    // mesh where variable is applied
-    MeshQuad4* mesh_ptr;  
+    // domain where variable is applied
+    DomainQuad4* domain_ptr;
+
+    // values in scalar
+    VectorDouble point_value_vec;  // key: point domain ID; value: value
+    Vector2D element_value_vec;  // key: element domain ID, point local ID; value: value
+
+    // use for non-constant scalars
+    bool is_value_constant = true;
+    double value_constant = 0;  // used if value is constant
+    std::function<double(double, double, VectorDouble)> value_function;  // used if value is non-constant
+    std::vector<VariableQuad4*> variable_ptr_vec;  // variables that values depend on
 
     // functions
     void output_csv(std::string file_out_str);
     void output_csv(std::string file_out_base_str, int ts);
+    void update_value();
 
     // default constructor
-    ScalarQuad4()
+    ScalarQuad4() {}
+    
+    // constructor for constant values
+    ScalarQuad4(DomainQuad4 &domain_in, double value_constant_in)
     {
+
+        // store domain
+        domain_ptr = &domain_in;
+
+        // store values
+        is_value_constant = true;
+        value_constant = value_constant_in;
+
+        // populate initial values
+        point_value_vec = VectorDouble(domain_ptr->num_point, value_constant);
 
     }
 
-    // constructor
-    ScalarQuad4(MeshQuad4 &mesh_in, double u_init_in)
+    // constructor for non-constant values
+    ScalarQuad4(DomainQuad4 &domain_in, std::function<double(double, double, VectorDouble)> value_function_in, std::vector<VariableQuad4*> variable_ptr_vec_in)
     {
 
-        // store mesh
-        mesh_ptr = &mesh_in;
+        // store domain
+        domain_ptr = &domain_in;
 
-        // get number of domain points
-        num_point_domain = mesh_ptr->num_point_domain;
+        // store values
+        is_value_constant = false;
+        value_function = value_function_in;
+        variable_ptr_vec = variable_ptr_vec_in;
 
         // populate initial values
-        for (int point_did = 0; point_did < num_point_domain; point_did++)
-        {
-            point_value_vec.push_back(u_init_in);
-        }
+        point_value_vec = VectorDouble(domain_ptr->num_point, 0.);  // unused placeholder
 
     }
 
@@ -89,12 +131,12 @@ void ScalarQuad4::output_csv(std::string file_out_str)
 
     // write to file
     file_out_stream << "gid,position_x,position_y,value\n";
-    for (int point_did = 0; point_did < num_point_domain; point_did++)
+    for (int pdid = 0; pdid < domain_ptr->num_point; pdid++)
     {
-        file_out_stream << mesh_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_ptr->point_position_y_vec[point_did] << ",";
-        file_out_stream << point_value_vec[point_did] << "\n";
+        file_out_stream << domain_ptr->point_pdid_to_pgid_vec[pdid] << ",";
+        file_out_stream << domain_ptr->point_position_x_vec[pdid] << ",";
+        file_out_stream << domain_ptr->point_position_y_vec[pdid] << ",";
+        file_out_stream << point_value_vec[pdid] << "\n";
     }
 
 }
@@ -146,13 +188,59 @@ void ScalarQuad4::output_csv(std::string file_out_base_str, int ts)
 
     // write to file
     file_out_stream << "gid,position_x,position_y,value\n";
-    for (int point_did = 0; point_did < num_point_domain; point_did++)
+    for (int pdid = 0; pdid < domain_ptr->num_point; pdid++)
     {
-        file_out_stream << mesh_ptr->point_gid_vec[point_did] << ",";
-        file_out_stream << mesh_ptr->point_position_x_vec[point_did] << ",";
-        file_out_stream << mesh_ptr->point_position_y_vec[point_did] << ",";
-        file_out_stream << point_value_vec[point_did] << "\n";
+        file_out_stream << domain_ptr->point_pdid_to_pgid_vec[pdid] << ",";
+        file_out_stream << domain_ptr->point_position_x_vec[pdid] << ",";
+        file_out_stream << domain_ptr->point_position_y_vec[pdid] << ",";
+        file_out_stream << point_value_vec[pdid] << "\n";
     }
+
+}
+
+void ScalarQuad4::update_value()
+{
+    /*
+
+    Recalculates non-constant values.
+
+    Arguments
+    =========
+    (none)
+    
+    Returns
+    =========
+    (none)
+
+    */
+
+    // skip if constant value
+    if (is_value_constant)
+    {
+        return;
+    }
+
+    // iterate through each point in scalar
+    for (int pdid = 0; pdid < domain_ptr->num_point; pdid++)
+    {
+
+        // get domain coordinate
+        double position_x = domain_ptr->point_position_x_vec[pdid];
+        double position_y = domain_ptr->point_position_y_vec[pdid];
+
+        // iterate through each variable that scalar depends on
+        VectorDouble value_vec;
+        for (auto variable_ptr : variable_ptr_vec)
+        {
+            value_vec.push_back(variable_ptr->point_value_vec[pdid]);
+        }
+
+        // calculate scalar value
+        point_value_vec[pdid] = value_function(position_x, position_y, value_vec);
+
+    }
+
+}
 
 }
 

@@ -1,10 +1,15 @@
 #ifndef BOUNDARY_TRI3
 #define BOUNDARY_TRI3
 #include <fstream>
+#include <functional>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
-#include "container_boundaryconfig.hpp"
 #include "container_typedef.hpp"
+#include "variable_tri3.hpp"
+
+namespace FEM2D
+{
 
 class BoundaryTri3
 {
@@ -14,142 +19,124 @@ class BoundaryTri3
 
     Variables
     =========
-    file_in_flux_str_in : string
-        Path to CSV file with data for flux-type BCs.
-    file_in_value_str_in : string
-        Path to CSV file with data for value-type BCs.
+    domain_in : DomainTri3
+        Domain where boundary conditions are applied.
+    file_in_str_in : string
+        Path to CSV file with data for BCs.
 
     Functions
     =========
-    set_boundarycondition : void
-        Assigns a BC type and parameters to a BC configuration ID.
-    set_boundarycondition_parameter : void
-        Assigns or modifies the parameters to a BC.
+    set_boundary : void
+        Assigns a BC type ID and parameters to a BC configuration ID.
+    set_boundary_type : void
+        Classifies BCs as essential or natural.
+    update_parameter : void
+        Recalculates non-constant BC parameters.
 
     Notes
     ====
-    Both CSV files must have the following columns:
+    The input CSV file must have the following columns:
         global element ID where BC is applied
-        1st local point ID where BC is applied (-1 or 0 to 2)
-        2nd local point ID where BC is applied (-1 or 0 to 2)
+        local point ID where BC is applied (0 or 1)
         BC configuration ID
-    Flux-type BCs add additional terms to the linearized equations (e.g., Neumann, Robin)
-    Value-type BCs completely replace the linearized equations (e.g., Dirichlet)
-    Use a local point ID of -1 to indicate that a boundary condition is not applied on the point.
 
     */
 
     public:
 
+    // bid - boundary ID - used to index BC data
+    // bnid - boundary natural ID - used to index natural BC data
+    // beid - boundary essential ID - used to index essential BC data
+    // btid - boundary type ID - denotes type of BC
+    // bcid - boundary config ID - denotes location of BC
+    // vectors use did as input
+
+    // mesh where variable is applied
+    DomainTri3* domain_ptr;
+
     // file names
-    std::string file_in_flux_str;
-    std::string file_in_value_str;
+    std::string file_in_str;
 
-    // flux boundary condition data
-    int num_element_flux_domain = 0;
-    VectorInt element_flux_gid_vec;
-    VectorInt element_flux_pa_lid_vec;
-    VectorInt element_flux_pb_lid_vec;
-    VectorInt element_flux_boundaryconfig_id_vec;
+    // boundary condition data
+    // index with bid
+    int num_boundary = 0;
+    VectorInt boundary_egid_vec;
+    VectorInt boundary_pa_plid_vec;
+    VectorInt boundary_pb_plid_vec;
+    VectorInt boundary_bcid_vec;
+    VectorInt boundary_btid_vec;
+    Vector2D boundary_pa_parameter_vec;
+    Vector2D boundary_pb_parameter_vec;
 
-    // value boundary condition data
-    int num_element_value_domain = 0;
-    VectorInt element_value_gid_vec;
-    VectorInt element_value_pa_lid_vec;
-    VectorInt element_value_pb_lid_vec;
-    VectorInt element_value_boundaryconfig_id_vec;
+    // use for non-constant boundary conditions
+    // index with bcid
+    std::unordered_map<int, bool> boundary_is_parameter_constant_map;
+    std::unordered_map<int, std::function<VectorDouble(double, double, VectorDouble)>> boundary_parameter_function_map;
+    std::unordered_map<int, std::vector<VariableTri3*>> boundary_variable_ptr_map;
 
-    // boundary condition type
-    int num_boundaryconfig = 0;
-    std::vector<BoundaryConfigStruct> boundaryconfig_vec;
+    // essential boundary condition data
+    // index with beid
+    int num_essential = 0;
+    VectorInt essential_egid_vec;
+    VectorInt essential_pa_plid_vec;
+    VectorInt essential_pb_plid_vec;
+    VectorInt essential_bcid_vec;
+    VectorInt essential_btid_vec;
+    Vector2D essential_pa_parameter_vec;
+    Vector2D essential_pb_parameter_vec;
+
+    // natural boundary condition data
+    // index with bnid
+    int num_natural = 0;
+    VectorInt natural_egid_vec;
+    VectorInt natural_pa_plid_vec;
+    VectorInt natural_pb_plid_vec;
+    VectorInt natural_bcid_vec;
+    VectorInt natural_btid_vec;
+    Vector2D natural_pa_parameter_vec;
+    Vector2D natural_pb_parameter_vec;
 
     // functions
-    void set_boundarycondition(int boundaryconfig_id, std::string type_str, VectorDouble parameter_vec);
-    void set_boundarycondition_parameter(int boundaryconfig_id, VectorDouble parameter_vec);
+    void set_boundary(int boundaryconfig_id, int boundarytype_id, VectorDouble parameter_vec);
+    void set_boundary(int boundaryconfig_id, int boundarytype_id, std::function<VectorDouble(double, double, VectorDouble)> parameter_function, std::vector<VariableTri3*> variable_ptr_vec);
+    void set_boundary_type(VectorInt boundarytype_essential_vec, VectorInt boundarytype_natural_vec);
+    void update_parameter();
 
     // default constructor
-    BoundaryTri3()
-    {
-
-    }
+    BoundaryTri3() {}
 
     // constructor
-    BoundaryTri3(std::string file_in_flux_str_in, std::string file_in_value_str_in)
+    BoundaryTri3(DomainTri3 &domain_in, std::string file_in_str_in)
     {
 
         // store variables
-        file_in_flux_str = file_in_flux_str_in;
-        file_in_value_str = file_in_value_str_in;
+        domain_ptr = &domain_in;
+        file_in_str = file_in_str_in;
 
         // read input files and store boundary condition data
-        read_boundary_flux(file_in_flux_str);
-        read_boundary_value(file_in_value_str);
-
-        // get largest boundary config id from flux BC
-        for (auto boundaryconfig_id : element_flux_boundaryconfig_id_vec)
-        {
-            if (boundaryconfig_id > num_boundaryconfig)
-            {
-                num_boundaryconfig = boundaryconfig_id;
-            }
-        }
-
-        // get largest boundary config id from value BC
-        for (auto boundaryconfig_id : element_value_boundaryconfig_id_vec)
-        {
-            if (boundaryconfig_id > num_boundaryconfig)
-            {
-                num_boundaryconfig = boundaryconfig_id;
-            }
-        }
-
-        // assume that first boundary config id is zero
-        // add one to get number of boundary config
-        num_boundaryconfig += 1;
-
-        // initialize boundary config id vector
-        boundaryconfig_vec = std::vector<BoundaryConfigStruct>(num_boundaryconfig);
-
-        // initialize boundary config id vector with zero flux
-        BoundaryConfigStruct boundaryconfig_zeroflux;
-        boundaryconfig_zeroflux.type_str = "neumann";
-        boundaryconfig_zeroflux.parameter_vec = {0};
-        for (auto boundaryconfig_id : element_flux_boundaryconfig_id_vec)
-        {
-            boundaryconfig_vec[boundaryconfig_id] = boundaryconfig_zeroflux;
-        }
-
-        // initialize boundary config id vector with zero values
-        BoundaryConfigStruct boundaryconfig_zerovalue;
-        boundaryconfig_zerovalue.type_str = "dirichlet";
-        boundaryconfig_zerovalue.parameter_vec = {0};
-        for (auto boundaryconfig_id : element_value_boundaryconfig_id_vec)
-        {
-            boundaryconfig_vec[boundaryconfig_id] = boundaryconfig_zerovalue;
-        }
+        read_boundary(file_in_str);
 
     }
 
     private:
-    void read_boundary_flux(std::string file_in_flux_str);
-    void read_boundary_value(std::string file_in_value_str);
+    void read_boundary(std::string file_in_str);
 
 };
 
-void BoundaryTri3::set_boundarycondition(int boundaryconfig_id, std::string type_str, VectorDouble parameter_vec)
+void BoundaryTri3::set_boundary(int boundaryconfig_id, int boundarytype_id, VectorDouble parameter_vec)
 {
     /*
 
-    Assigns a BC type and parameters to a BC configuration ID.
+    Assigns a BC type ID and parameters to a BC configuration ID.
 
     Arguments
     =========
     boundaryconfig_id : int
         BC configuration ID.
-    type_str : string
-        Type of boundary condition.
+    boundarytype_id : int
+        BC type ID assigned to BC configuration ID.
     parameter_vec : VectorDouble
-        vector with parameters for the BC.
+        Parameters assigned to BC configuration ID.
 
     Returns
     =======
@@ -157,29 +144,100 @@ void BoundaryTri3::set_boundarycondition(int boundaryconfig_id, std::string type
 
     Notes
     ====
-    type_str can be "neumann" or "robin" if boundaryconfig_id refers to flux-type BCs.
-    type_str can be "dirichlet" if boundaryconfig_id refers to value-type BCs.
+    The BC configuration ID indicates the location of the BC.
+    The BC type ID denotes the type of BC (e.g., Dirichlet, Neumann, etc.).
+        The int corresponding to each BC type depends on the physics.
 
     */
 
-    // modify struct properties
-    boundaryconfig_vec[boundaryconfig_id].type_str = type_str;
-    boundaryconfig_vec[boundaryconfig_id].parameter_vec = parameter_vec;
+    // iterate through each boundary condition
+    for (int bid = 0; bid < num_boundary; bid++)
+    {
+
+        // skip if different boundary config ID
+        if (boundary_bcid_vec[bid] != boundaryconfig_id)
+        {
+            continue;
+        }
+
+        // set boundary type and parameters
+        boundary_btid_vec[bid] = boundarytype_id;
+        boundary_pa_parameter_vec[bid] = parameter_vec;
+        boundary_pb_parameter_vec[bid] = parameter_vec;
+
+    }
+
+    // set boundary parameters as constant
+    boundary_is_parameter_constant_map[boundaryconfig_id] = true;
 
 }
 
-void BoundaryTri3::set_boundarycondition_parameter(int boundaryconfig_id, VectorDouble parameter_vec)
+void BoundaryTri3::set_boundary(int boundaryconfig_id, int boundarytype_id, std::function<VectorDouble(double, double, VectorDouble)> parameter_function, std::vector<VariableTri3*> variable_ptr_vec)
 {
     /*
 
-    Assigns or modifies the parameters to a BC.
+    Assigns a BC type ID and parameters to a BC configuration ID.
 
     Arguments
     =========
     boundaryconfig_id : int
         BC configuration ID.
-    parameter_vec : VectorDouble
-        vector with parameters for the BC.
+    boundarytype_id : int
+        BC type ID assigned to BC configuration ID.
+    parameter_function : function<double, VectorDouble> -> VectorDouble
+        Function used to compute parameter values based on variable values.
+    variable_ptr_vec : vector<VariableTri3*>
+        vector of pointers to variable objects needed to compute parameter values.
+
+    Returns
+    =======
+    (none)
+
+    Notes
+    ====
+    The BC configuration ID indicates the location of the BC.
+    The BC type ID denotes the type of BC (e.g., Dirichlet, Neumann, etc.).
+        The int corresponding to each BC type depends on the physics.
+    The inputs to the parameter function are the x-coordinate (double) and vector of variable values (VectorDouble) at a specified point.
+        The variable values are in the same order as the variables in variable_ptr_vec.
+    The output of the parameter function is the vector of parameter values (VectorDouble).
+
+    */
+
+    // iterate through each boundary condition
+    for (int bid = 0; bid < num_boundary; bid++)
+    {
+
+        // skip if different boundary config ID
+        if (boundary_bcid_vec[bid] != boundaryconfig_id)
+        {
+            continue;
+        }
+
+        // set boundary type and parameters
+        boundary_btid_vec[bid] = boundarytype_id;
+
+    }
+
+    // set boundary parameters as non-constant
+    boundary_is_parameter_constant_map[boundaryconfig_id] = false;
+    boundary_parameter_function_map[boundaryconfig_id] = parameter_function;
+    boundary_variable_ptr_map[boundaryconfig_id] = variable_ptr_vec;
+
+}
+
+void BoundaryTri3::set_boundary_type(VectorInt boundarytype_essential_vec, VectorInt boundarytype_natural_vec)
+{
+    /*
+
+    Classifies BCs as essential or natural.
+
+    Arguments
+    =========
+    boundarytype_essential_vec : VectorInt
+        vector with BC type IDs that denote essential BCs.
+    boundarytype_essential_vec : VectorInt
+        vector with BC type IDs that denote natural BCs.
 
     Returns
     =======
@@ -187,120 +245,231 @@ void BoundaryTri3::set_boundarycondition_parameter(int boundaryconfig_id, Vector
 
     */
 
-    // modify struct properties
-    boundaryconfig_vec[boundaryconfig_id].parameter_vec = parameter_vec;
+    // iterate through boundaries
+    for (int bid = 0; bid < num_boundary; bid++)
+    {
+
+        // get boundary type
+        int btid = boundary_btid_vec[bid];
+
+        // fill up vectors for essential boundary conditions
+        auto iter_essential = std::find(boundarytype_essential_vec.begin(), boundarytype_essential_vec.end(), btid);
+        if (iter_essential != boundarytype_essential_vec.end())
+        {
+            num_essential++;
+            essential_egid_vec.push_back(boundary_egid_vec[bid]);
+            essential_pa_plid_vec.push_back(boundary_pa_plid_vec[bid]);
+            essential_pb_plid_vec.push_back(boundary_pb_plid_vec[bid]);
+            essential_bcid_vec.push_back(boundary_bcid_vec[bid]);
+            essential_btid_vec.push_back(boundary_btid_vec[bid]);
+            essential_pa_parameter_vec.push_back(boundary_pa_parameter_vec[bid]);
+            essential_pb_parameter_vec.push_back(boundary_pb_parameter_vec[bid]);
+        }
+
+        // fill up vectors for natural boundary conditions
+        auto iter_natural = std::find(boundarytype_natural_vec.begin(), boundarytype_natural_vec.end(), btid);
+        if (iter_natural != boundarytype_natural_vec.end())
+        {
+            num_natural++;
+            natural_egid_vec.push_back(boundary_egid_vec[bid]);
+            natural_pa_plid_vec.push_back(boundary_pa_plid_vec[bid]);
+            natural_pb_plid_vec.push_back(boundary_pb_plid_vec[bid]);
+            natural_bcid_vec.push_back(boundary_bcid_vec[bid]);
+            natural_btid_vec.push_back(boundary_btid_vec[bid]);
+            natural_pa_parameter_vec.push_back(boundary_pa_parameter_vec[bid]);
+            natural_pb_parameter_vec.push_back(boundary_pb_parameter_vec[bid]);
+        }
+
+    }
 
 }
 
-void BoundaryTri3::read_boundary_flux(std::string file_in_flux_str)
+void BoundaryTri3::update_parameter()
 {
+    /*
 
-    // read file with flux BC data
-    std::ifstream file_in_flux_stream(file_in_flux_str);
+    Recalculates non-constant BC parameters.
 
-    // initialize for iteration
-    bool is_flux_header = true;  // true while reading header
-    std::string line_flux_str;  // stores lines in files
+    Arguments
+    =========
+    (none)
+    
+    Returns
+    =========
+    (none)
 
-    // iterate for each line in the file
-    while (std::getline(file_in_flux_stream, line_flux_str))
+    */
+
+    // iterate through essential boundaries
+    for (int beid = 0; beid < num_essential; beid++)
     {
 
-        // skip header
-        if (is_flux_header)
+        // get boundary type
+        int bcid = essential_bcid_vec[beid];
+
+        // skip if parameters are constant
+        if (boundary_is_parameter_constant_map[bcid])
         {
-            is_flux_header = false; // not reading header
             continue;
         }
 
-        // count number of particles
-        num_element_flux_domain++;
+        // get element where boundary is applied
+        int egid = essential_egid_vec[beid];
+        int edid = domain_ptr->element_egid_to_edid_map[egid];
+
+        // get points surrounding the element
+        int p0_pgid = domain_ptr->element_p0_pgid_vec[edid];
+        int p1_pgid = domain_ptr->element_p1_pgid_vec[edid];
+        int p2_pgid = domain_ptr->element_p2_pgid_vec[edid];
+        int pgid_arr[3] = {p0_pgid, p1_pgid, p2_pgid};
+
+        // get point where boundary is applied
+        int pa_plid = essential_pa_plid_vec[beid];
+        int pb_plid = essential_pb_plid_vec[beid];
+        int pa_pgid = pgid_arr[pa_plid];
+        int pb_pgid = pgid_arr[pb_plid];
+        int pa_pdid = domain_ptr->point_pgid_to_pdid_map[pa_pgid];
+        int pb_pdid = domain_ptr->point_pgid_to_pdid_map[pb_pgid];
+
+        // subset location on mesh
+        double pa_position_x = domain_ptr->point_position_x_vec[pa_pdid];
+        double pb_position_x = domain_ptr->point_position_x_vec[pb_pdid];
+        double pa_position_y = domain_ptr->point_position_y_vec[pa_pdid];
+        double pb_position_y = domain_ptr->point_position_y_vec[pb_pdid];
+
+        // subset value of variables
+        VectorDouble pa_value_vec;
+        VectorDouble pb_value_vec;
+        for (auto variable_ptr : boundary_variable_ptr_map[bcid])
+        {
+            double pa_value_sub = variable_ptr->point_value_vec[pa_pdid];
+            double pb_value_sub = variable_ptr->point_value_vec[pb_pdid];
+            pa_value_vec.push_back(pa_value_sub);
+            pb_value_vec.push_back(pb_value_sub);
+        }
+
+        // calculate parameter value
+        essential_pa_parameter_vec[beid] = boundary_parameter_function_map[bcid](pa_position_x, pa_position_y, pa_value_vec);
+        essential_pb_parameter_vec[beid] = boundary_parameter_function_map[bcid](pb_position_x, pb_position_y, pb_value_vec);
+
+    }
+
+    // iterate through natural boundaries
+    for (int bnid = 0; bnid < num_natural; bnid++)
+    {
+
+        // get boundary type
+        int bcid = natural_bcid_vec[bnid];
+
+        // skip if parameters are constant
+        if (boundary_is_parameter_constant_map[bcid])
+        {
+            continue;
+        }
+
+        // get element where boundary is applied
+        int egid = natural_egid_vec[bnid];
+        int edid = domain_ptr->element_egid_to_edid_map[egid];
+
+        // get points surrounding the element
+        int p0_pgid = domain_ptr->element_p0_pgid_vec[edid];
+        int p1_pgid = domain_ptr->element_p1_pgid_vec[edid];
+        int p2_pgid = domain_ptr->element_p2_pgid_vec[edid];
+        int pgid_arr[3] = {p0_pgid, p1_pgid, p2_pgid};
+
+        // get point where boundary is applied
+        int pa_plid = natural_pa_plid_vec[bnid];
+        int pb_plid = natural_pb_plid_vec[bnid];
+        int pa_pgid = pgid_arr[pa_plid];
+        int pb_pgid = pgid_arr[pb_plid];
+        int pa_pdid = domain_ptr->point_pgid_to_pdid_map[pa_pgid];
+        int pb_pdid = domain_ptr->point_pgid_to_pdid_map[pb_pgid];
+
+        // subset location on mesh
+        double pa_position_x = domain_ptr->point_position_x_vec[pa_pdid];
+        double pb_position_x = domain_ptr->point_position_x_vec[pb_pdid];
+        double pa_position_y = domain_ptr->point_position_y_vec[pa_pdid];
+        double pb_position_y = domain_ptr->point_position_y_vec[pb_pdid];
+
+        // subset value of variables
+        VectorDouble pa_value_vec;
+        VectorDouble pb_value_vec;
+        for (auto variable_ptr : boundary_variable_ptr_map[bcid])
+        {
+            double pa_value_sub = variable_ptr->point_value_vec[pa_pdid];
+            double pb_value_sub = variable_ptr->point_value_vec[pb_pdid];
+            pa_value_vec.push_back(pa_value_sub);
+            pb_value_vec.push_back(pb_value_sub);
+        }
+
+        // calculate parameter value
+        natural_pa_parameter_vec[bnid] = boundary_parameter_function_map[bcid](pa_position_x, pa_position_y, pa_value_vec);
+        natural_pb_parameter_vec[bnid] = boundary_parameter_function_map[bcid](pb_position_x, pb_position_y, pb_value_vec);
+
+    }
+
+}
+
+void BoundaryTri3::read_boundary(std::string file_in_str)
+{
+
+    // read file with natural BC data
+    std::ifstream file_in_stream(file_in_str);
+
+    // initialize for iteration
+    bool is_header = true;  // true while reading header
+    std::string line_str;  // stores lines in files
+
+    // iterate for each line in the file
+    while (std::getline(file_in_stream, line_str))
+    {
+
+        // skip header
+        if (is_header)
+        {
+            is_header = false; // not reading header
+            continue;
+        }
+
+        // count number of boundaries
+        num_boundary++;
 
         // convert line string into stringstream
-        std::stringstream line_flux_stream(line_flux_str);
+        std::stringstream line_stream(line_str);
 
         // initialize for iteration
-        int value_flux_num = 0;  // counts position of value
-        std::string value_flux_str;  // stores values in lines
+        int value_num = 0;  // counts position of value
+        std::string value_str;  // stores values in lines
 
         // iterate through each value
-        while (std::getline(line_flux_stream, value_flux_str, ','))
+        while (std::getline(line_stream, value_str, ','))
         {
 
             // store values in appropriate vector
-            switch (value_flux_num)
+            switch (value_num)
             {
-                case 0: element_flux_gid_vec.push_back(std::stoi(value_flux_str)); break;
-                case 1: element_flux_pa_lid_vec.push_back(std::stoi(value_flux_str)); break;
-                case 2: element_flux_pb_lid_vec.push_back(std::stoi(value_flux_str)); break;
-                case 3: element_flux_boundaryconfig_id_vec.push_back(std::stoi(value_flux_str)); break;
+                case 0: boundary_egid_vec.push_back(std::stoi(value_str)); break;
+                case 1: boundary_pa_plid_vec.push_back(std::stoi(value_str)); break;
+                case 2: boundary_pb_plid_vec.push_back(std::stoi(value_str)); break;
+                case 3: boundary_bcid_vec.push_back(std::stoi(value_str)); break;
             }
 
             // increment value count
-            value_flux_num++;
+            value_num++;
 
         }
 
     }
 
     // close point file
-    file_in_flux_stream.close();    
+    file_in_stream.close();    
+
+    // fill up vectors with preliminary values
+    boundary_btid_vec = VectorInt(num_boundary, 0);
+    boundary_pa_parameter_vec = Vector2D(num_boundary, Vector1D{});
+    boundary_pb_parameter_vec = Vector2D(num_boundary, Vector1D{});
 
 }
-
-void BoundaryTri3::read_boundary_value(std::string file_in_value_str)
-{
-
-    // read file with value BC data
-    std::ifstream file_in_value_stream(file_in_value_str);
-
-    // initialize for iteration
-    bool is_value_header = true;  // true while reading header
-    std::string line_value_str;  // stores lines in files
-
-    // iterate for each line in the file
-    while (std::getline(file_in_value_stream, line_value_str))
-    {
-
-        // skip header
-        if (is_value_header)
-        {
-            is_value_header = false; // not reading header
-            continue;
-        }
-
-        // count number of particles
-        num_element_value_domain++;
-
-        // convert line string into stringstream
-        std::stringstream line_value_stream(line_value_str);
-
-        // initialize for iteration
-        int value_value_num = 0;  // counts position of value
-        std::string value_value_str;  // stores values in lines
-
-        // iterate through each value
-        while (std::getline(line_value_stream, value_value_str, ','))
-        {
-
-            // store values in appropriate vector
-            switch (value_value_num)
-            {
-                case 0: element_value_gid_vec.push_back(std::stoi(value_value_str)); break;
-                case 1: element_value_pa_lid_vec.push_back(std::stoi(value_value_str)); break;
-                case 2: element_value_pb_lid_vec.push_back(std::stoi(value_value_str)); break;
-                case 3: element_value_boundaryconfig_id_vec.push_back(std::stoi(value_value_str)); break;
-            }
-
-            // increment value count
-            value_value_num++;
-
-        }
-
-    }
-
-    // close point file
-    file_in_value_stream.close();
 
 }
 

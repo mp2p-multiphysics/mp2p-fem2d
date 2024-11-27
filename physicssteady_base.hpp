@@ -2,12 +2,15 @@
 #define PHYSICSSTEADY_BASE
 #include <vector>
 #include "Eigen/Eigen"
-#include "boundary_physicsgroup.hpp"
+#include "boundary_group.hpp"
 #include "container_typedef.hpp"
-#include "mesh_physicsgroup.hpp"
-#include "scalar_fieldgroup.hpp"
-#include "integral_physicsgroup.hpp"
-#include "variable_fieldgroup.hpp"
+#include "domain_group.hpp"
+#include "scalar_group.hpp"
+#include "integral_group.hpp"
+#include "variable_group.hpp"
+
+namespace FEM2D
+{
 
 class PhysicsSteadyBase
 {
@@ -23,20 +26,25 @@ class PhysicsSteadyBase
         Sets the starting row in A and b where entries are filled up.
     get_start_row : int
         Returns the starting row.
-    get_variable_field_ptr_vec() : vector<VariableFieldGroup*>
-        Returns the vector containing pointers to VariableFieldGroup objects tied to this physics.
+    get_boundary_group_ptr_vec : vector<BoundaryGroup*>
+        Returns the vector containing pointers to BoundaryGroup objects tied to this physics.
+    get_scalar_group_ptr_vec : vector<ScalarGroup*>
+        Returns the vector containing pointers to ScalarGroup objects tied to this physics.
+    get_variable_group_ptr_vec : vector<VariableGroup*>
+        Returns the vector containing pointers to VariableGroup objects tied to this physics.
 
     */
 
     public:
 
-    // physics groups
-    MeshPhysicsGroup *mesh_physics_ptr;
-    BoundaryPhysicsGroup *boundary_physics_ptr;
-    IntegralPhysicsGroup *integral_physics_ptr;
+    // variables
+    DomainGroup *domain_group_ptr;
+    BoundaryGroup *boundary_group_ptr;
+    IntegralGroup *integral_group_ptr;
 
-    // vector of variable fields
-    std::vector<VariableFieldGroup*> variable_field_ptr_vec;
+    // vector of scalar and variable groups
+    std::vector<ScalarGroup*> scalar_group_ptr_vec;
+    std::vector<VariableGroup*> variable_group_ptr_vec;
 
     // starting row of test functions in matrix equation
     int start_row = -1;
@@ -45,13 +53,12 @@ class PhysicsSteadyBase
     virtual void matrix_fill(Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec);
     virtual void set_start_row(int start_row_in);
     virtual int get_start_row();
-    virtual std::vector<VariableFieldGroup*> get_variable_field_ptr_vec();
+    virtual BoundaryGroup* get_boundary_group_ptr();
+    virtual std::vector<ScalarGroup*> get_scalar_group_ptr_vec();
+    virtual std::vector<VariableGroup*> get_variable_group_ptr_vec();
 
     // default constructor
-    PhysicsSteadyBase()
-    {
-
-    }
+    PhysicsSteadyBase() {}
 
 };
 
@@ -120,11 +127,11 @@ int PhysicsSteadyBase::get_start_row()
 
 }
 
-std::vector<VariableFieldGroup*> PhysicsSteadyBase::get_variable_field_ptr_vec()
+BoundaryGroup* PhysicsSteadyBase::get_boundary_group_ptr()
 {
     /*
 
-    Returns the vector containing pointers to VariableFieldGroup objects tied to this physics.
+    Returns the pointer to the BoundaryGroup object tied to this physics.
 
     Arguments
     =========
@@ -132,12 +139,56 @@ std::vector<VariableFieldGroup*> PhysicsSteadyBase::get_variable_field_ptr_vec()
 
     Returns
     =======
-    variable_field_ptr : vector<VariableFieldGroup*>
-        Vector containing pointers to VariableFieldGroup objects.
+    boundary_group_ptr : BoundaryGroup*
+        Pointer to BoundaryGroup object.
 
     */
     
-    return variable_field_ptr_vec;
+    return boundary_group_ptr;
+
+}
+
+std::vector<ScalarGroup*> PhysicsSteadyBase::get_scalar_group_ptr_vec()
+{
+    /*
+
+    Returns the vector containing pointers to ScalarGroup objects tied to this physics.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =======
+    scalar_group_ptr : vector<ScalarGroup*>
+        Vector containing pointers to ScalarGroup objects.
+
+    */
+    
+    return scalar_group_ptr_vec;
+
+}
+
+std::vector<VariableGroup*> PhysicsSteadyBase::get_variable_group_ptr_vec()
+{
+    /*
+
+    Returns the vector containing pointers to VariableGroup objects tied to this physics.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =======
+    variable_group_ptr : vector<VariableGroup*>
+        Vector containing pointers to VariableGroup objects.
+
+    */
+    
+    return variable_group_ptr_vec;
+
+}
 
 }
 
