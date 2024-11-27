@@ -12,7 +12,7 @@ class DomainQuad4
 {
     /*
 
-    Domain made of line2 elements.
+    Domain made of quad4 elements.
 
     Variables
     =========
@@ -26,11 +26,25 @@ class DomainQuad4
     The CSV file with point data must have the following columns:
         global point ID
         x-coordinate of point
+        y-coordinate of point
     The CSV file with element data must have the following columns:
         global element ID
         global point ID of local point 0
         global point ID of local point 1
-    Point 0 and 1 refer to the left and right points of each element.
+        global point ID of local point 2
+        global point ID of local point 3
+    Points 0, 1, 2, and 3 are shown below for a quad4 element in local coordinates.
+
+               (local y)
+                   ^
+                   |
+              1 ---|--- 2
+              |    |    | 
+        <----------+----------> (local x)     
+              |    |    |
+              0 ---|--- 3
+                   |
+                   v
 
     */
 

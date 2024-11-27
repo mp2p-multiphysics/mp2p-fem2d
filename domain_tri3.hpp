@@ -12,7 +12,7 @@ class DomainTri3
 {
     /*
 
-    Domain made of line2 elements.
+    Domain made of tri3 elements.
 
     Variables
     =========
@@ -26,11 +26,24 @@ class DomainTri3
     The CSV file with point data must have the following columns:
         global point ID
         x-coordinate of point
+        y-coordinate of point
     The CSV file with element data must have the following columns:
         global element ID
         global point ID of local point 0
         global point ID of local point 1
-    Point 0 and 1 refer to the left and right points of each element.
+        global point ID of local point 2
+    Points 0, 1, and 2 are shown below for a tri3 element in local coordinates.
+
+          (local y)
+             ^
+             |
+             2 \
+             |   \
+             |     \
+             |       \
+        <----1---------0------> (local x)
+             |
+             v
 
     */
 

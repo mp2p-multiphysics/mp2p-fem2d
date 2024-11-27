@@ -27,7 +27,7 @@ class ScalarQuad4
     =========
     domain_in : DomainQuad4
         Domain where scalar value is applied.
-    value_function_in : function(double, VectorDouble) -> double
+    value_function_in : function(double, double, VectorDouble) -> double
         Function used to compute scalar values based on variable values.
     variable_ptr_vec_in : vector<VariableQuad4*>
         vector of pointers to variable objects needed to compute scalar values.
@@ -41,7 +41,7 @@ class ScalarQuad4
 
     Notes
     ====
-    The inputs to the value function are the x-coordinate (double) and vector of variable values (VectorDouble) at a specified point.
+    The inputs to the value function are the x-coordinate (double), y-coordinate (double), and vector of variable values (VectorDouble) at a specified point.
         The variable values are in the same order as the variables in variable_ptr_vec.
     The output of the value function is the value of the scalar.
 

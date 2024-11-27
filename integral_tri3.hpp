@@ -21,7 +21,7 @@ class IntegralTri3
         Domain where element integrals are calculated.
     boundary_in : BoundaryTri3
         Boundaries where element integrals are calculated.
-
+    
     Functions
     =========
     evaluate_Ni : void
@@ -31,14 +31,20 @@ class IntegralTri3
         Calculates the integral of Ni.
     evaluate_integral_derivative_Ni_x : void
         Calculates the integral of d(Ni)/dx.
+    evaluate_integral_derivative_Ni_y : void
+        Calculates the integral of d(Ni)/dy.
     evaluate_integral_Ni_Nj : void
         Calculates the integral of Ni * Nj.
     evaluate_integral_Ni_derivative_Nj_x : void
         Calculates the integral of Ni * d(Nj)/dx.
+    evaluate_integral_Ni_derivative_Nj_y : void
+        Calculates the integral of Ni * d(Nj)/dy.
     evaluate_integral_div_Ni_dot_div_Nj : void
         Calculates the integral of div(Ni) dot div(Nj).
     evaluate_integral_Ni_Nj_derivative_Nk_x : void
         Calculates the integral of Ni * Nj * d(Nk)/dx.
+    evaluate_integral_Ni_Nj_derivative_Nk_y : void
+        Calculates the integral of Ni * Nj * d(Nk)/dy.
     evaluate_boundary_Ni : void
         Calculates test functions values and other properties at the boundary.
         Must be called before boundary integrals are evaluated.
@@ -56,7 +62,9 @@ class IntegralTri3
     Values of the boundary integrals can be accessed from each vector using the following pattern:
         integral_vec[edid][boundary_key][i][j]...
         wherein boundary_key is an int denoting the location of the boundary.
-        For tri3 elements, the boundary_key is just the local ID of the point (0 or 1).
+        For tri3 elements, the boundary_key is computed using the following pairing function:
+        helper_num = pa_plid + pb_plid + 1
+        boundary_key = (helper_num*helper_num - helper_num % 2)/4 + min(pa_plid, pb_plid)
 
     */
 

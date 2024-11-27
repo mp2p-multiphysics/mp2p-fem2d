@@ -15,8 +15,10 @@ class IntegralGroup
 
     Variables
     =========
-    integral_l2_ptr_vec_in : vector<IntegralLine2*>
-        vector with pointers to IntegralLine2 objects.
+    integral_t3_ptr_vec_in : vector<IntegralTri3*>
+        vector with pointers to IntegralTri3 objects.
+    integral_q4_ptr_vec_in : vector<IntegralQuad4*>
+        vector with pointers to IntegralQuad4 objects.
 
     Functions
     =========
@@ -27,14 +29,20 @@ class IntegralGroup
         Calculates the integral of Ni.
     evaluate_integral_derivative_Ni_x : void
         Calculates the integral of d(Ni)/dx.
+    evaluate_integral_derivative_Ni_y : void
+        Calculates the integral of d(Ni)/dy.
     evaluate_integral_Ni_Nj : void
         Calculates the integral of Ni * Nj.
     evaluate_integral_Ni_derivative_Nj_x : void
         Calculates the integral of Ni * d(Nj)/dx.
+    evaluate_integral_Ni_derivative_Nj_y : void
+        Calculates the integral of Ni * d(Nj)/dy.
     evaluate_integral_div_Ni_dot_div_Nj : void
         Calculates the integral of div(Ni) dot div(Nj).
     evaluate_integral_Ni_Nj_derivative_Nk_x : void
         Calculates the integral of Ni * Nj * d(Nk)/dx.
+    evaluate_integral_Ni_Nj_derivative_Nk_y : void
+        Calculates the integral of Ni * Nj * d(Nk)/dy.
     evaluate_boundary_Ni : void
         Calculates test functions values and other properties at the boundary.
         Must be called before boundary integrals are evaluated.

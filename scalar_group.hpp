@@ -20,8 +20,10 @@ class ScalarGroup
 
     Variables
     =========
-    scalar_l2_ptr_vec_in : vector<ScalarLine2*>
-        vector with pointers to ScalarLine2 objects.
+    scalar_t3_ptr_vec_in : vector<ScalarTri3*>
+        vector with pointers to ScalarTri3 objects.
+    scalar_q4_ptr_vec_in : vector<ScalarQuad4*>
+        vector with pointers to ScalarQuad4 objects.
 
     Functions
     =========

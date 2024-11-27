@@ -18,9 +18,11 @@ class VariableGroup
 
     Variables
     =========
-    variable_l2_ptr_vec_in : vector<VariableLine2*>
-        vector with pointers to VariableLine2 objects.
-    
+    variable_t3_ptr_vec_in : vector<VariableTri3*>
+        vector with pointers to VariableTri3 objects.
+    variable_q4_ptr_vec_in : vector<VariableQuad4*>
+        vector with pointers to VariableQuad4 objects.
+
     */
 
     public:

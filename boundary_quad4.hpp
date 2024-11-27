@@ -37,7 +37,7 @@ class BoundaryQuad4
     ====
     The input CSV file must have the following columns:
         global element ID where BC is applied
-        local point ID where BC is applied (0 or 1)
+        local point ID where BC is applied (0 to 3)
         BC configuration ID
 
     */
@@ -184,7 +184,7 @@ void BoundaryQuad4::set_boundary(int boundaryconfig_id, int boundarytype_id, std
         BC configuration ID.
     boundarytype_id : int
         BC type ID assigned to BC configuration ID.
-    parameter_function : function<double, VectorDouble> -> VectorDouble
+    parameter_function : function<double, double, VectorDouble> -> VectorDouble
         Function used to compute parameter values based on variable values.
     variable_ptr_vec : vector<VariableQuad4*>
         vector of pointers to variable objects needed to compute parameter values.
@@ -198,7 +198,7 @@ void BoundaryQuad4::set_boundary(int boundaryconfig_id, int boundarytype_id, std
     The BC configuration ID indicates the location of the BC.
     The BC type ID denotes the type of BC (e.g., Dirichlet, Neumann, etc.).
         The int corresponding to each BC type depends on the physics.
-    The inputs to the parameter function are the x-coordinate (double) and vector of variable values (VectorDouble) at a specified point.
+    The inputs to the parameter function are the x-coordinate (double), y-coordinate (double), and vector of variable values (VectorDouble) at a specified point.
         The variable values are in the same order as the variables in variable_ptr_vec.
     The output of the parameter function is the vector of parameter values (VectorDouble).
 
