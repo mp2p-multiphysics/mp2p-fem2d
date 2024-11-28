@@ -476,14 +476,14 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_domain
                 velx_arr[indx_i] * integral_ptr->integral_Ni_derivative_Nj_x_vec[edid][indx_i][indx_j] +
                 vely_arr[indx_i] * integral_ptr->integral_Ni_derivative_Nj_y_vec[edid][indx_i][indx_j]
             );
-            c_mat.coeffRef(mat_row, mat_col) += (dervcoeff_arr[indx_i]/dt)*integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j];
+            c_mat.coeffRef(mat_row, mat_col) += (dervcoeff_arr[indx_i]/dt) * integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j];
         }}
 
         // calculate d_vec coefficients
         for (int indx_i = 0; indx_i < 3; indx_i++)
         {
             int mat_row = start_row + pfid_arr[indx_i];
-            d_vec.coeffRef(mat_row) += gencoeff_arr[indx_i]*integral_ptr->integral_Ni_vec[edid][indx_i];
+            d_vec.coeffRef(mat_row) += gencoeff_arr[indx_i] * integral_ptr->integral_Ni_vec[edid][indx_i];
         }
 
     }
@@ -748,14 +748,14 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_domain
                 velx_arr[indx_i] * integral_ptr->integral_Ni_derivative_Nj_x_vec[edid][indx_i][indx_j] +
                 vely_arr[indx_i] * integral_ptr->integral_Ni_derivative_Nj_y_vec[edid][indx_i][indx_j]
             );
-            c_mat.coeffRef(mat_row, mat_col) += (dervcoeff_arr[indx_i]/dt)*integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j];
+            c_mat.coeffRef(mat_row, mat_col) += (dervcoeff_arr[indx_i]/dt) * integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j];
         }}
 
         // calculate d_vec coefficients
         for (int indx_i = 0; indx_i < 4; indx_i++)
         {
             int mat_row = start_row + pfid_arr[indx_i];
-            d_vec.coeffRef(mat_row) += gencoeff_arr[indx_i]*integral_ptr->integral_Ni_vec[edid][indx_i];
+            d_vec.coeffRef(mat_row) += gencoeff_arr[indx_i] * integral_ptr->integral_Ni_vec[edid][indx_i];
         }
 
     }

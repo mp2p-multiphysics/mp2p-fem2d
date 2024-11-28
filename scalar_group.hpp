@@ -27,6 +27,8 @@ class ScalarGroup
 
     Functions
     =========
+    output_csv : void
+        Outputs a CSV file with the values of the scalar.
     update_value : void
         Recalculates non-constant values.
 
@@ -46,6 +48,8 @@ class ScalarGroup
     std::vector<ScalarQuad4*> scalar_q4_ptr_vec;  // vector of scalars
 
     // functions
+    void output_csv();
+    void output_csv(int ts);
     void update_value();
 
     // default constructor
@@ -107,6 +111,63 @@ class ScalarGroup
     }
 
 };
+
+void ScalarGroup::output_csv()
+{
+    /*
+
+    Outputs a CSV file with the values of the scalar.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =======
+    (none)
+
+    */
+
+    // iterate through each scalar
+    for (auto scalar_ptr : scalar_t3_ptr_vec)
+    {
+        scalar_ptr->output_csv();
+    }
+    for (auto scalar_ptr : scalar_q4_ptr_vec)
+    {
+        scalar_ptr->output_csv();
+    }
+
+}
+
+void ScalarGroup::output_csv(int ts)
+{
+    /*
+
+    Outputs a CSV file with the values of the scalar.
+
+    Arguments
+    =========
+    ts : int
+        Timestep number.
+
+    Returns
+    =======
+    (none)
+
+    */
+
+    // iterate through each scalar
+    for (auto scalar_ptr : scalar_t3_ptr_vec)
+    {
+        scalar_ptr->output_csv(ts);
+    }
+    for (auto scalar_ptr : scalar_q4_ptr_vec)
+    {
+        scalar_ptr->output_csv(ts);
+    }
+
+}
 
 void ScalarGroup::update_value()
 {

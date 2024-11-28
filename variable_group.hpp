@@ -23,6 +23,11 @@ class VariableGroup
     variable_q4_ptr_vec_in : vector<VariableQuad4*>
         vector with pointers to VariableQuad4 objects.
 
+    Functions
+    =========
+    output_csv : void
+        Outputs a CSV file with the values of the variable.
+
     */
 
     public:
@@ -40,6 +45,10 @@ class VariableGroup
 
     // starting column of variables in matrix equation
     int start_col = -1;
+
+    // functions
+    void output_csv();
+    void output_csv(int ts);
 
     // default constructor
     VariableGroup() {}
@@ -102,6 +111,63 @@ class VariableGroup
     }
 
 };
+
+void VariableGroup::output_csv()
+{
+    /*
+
+    Outputs a CSV file with the values of the variable.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =======
+    (none)
+
+    */
+
+    // iterate through each variable
+    for (auto variable_ptr : variable_t3_ptr_vec)
+    {
+        variable_ptr->output_csv();
+    }
+    for (auto variable_ptr : variable_q4_ptr_vec)
+    {
+        variable_ptr->output_csv();
+    }
+
+}
+
+void VariableGroup::output_csv(int ts)
+{
+    /*
+
+    Outputs a CSV file with the values of the variable.
+
+    Arguments
+    =========
+    ts : int
+        Timestep number.
+
+    Returns
+    =======
+    (none)
+
+    */
+
+    // iterate through each variable
+    for (auto variable_ptr : variable_t3_ptr_vec)
+    {
+        variable_ptr->output_csv(ts);
+    }
+    for (auto variable_ptr : variable_q4_ptr_vec)
+    {
+        variable_ptr->output_csv(ts);
+    }
+
+}
 
 }
 

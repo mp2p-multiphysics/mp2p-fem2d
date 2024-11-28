@@ -23,6 +23,8 @@ class VariableTri3
 
     Functions
     =========
+    set_output : void
+        Set the output CSV file name with the values of the variable.
     output_csv : void
         Outputs a CSV file with the values of the variable.
 
@@ -30,16 +32,22 @@ class VariableTri3
 
     public:
 
+    // domain where variable is applied
+    DomainTri3* domain_ptr; 
+
     // values in variable
     int num_point = 0;  // number of points in domain
     VectorDouble point_value_vec;  // key: domain ID; value: value
-    
-    // domain where variable is applied
-    DomainTri3* domain_ptr;  
+
+    // use for generating csv file
+    bool is_file_out = false;
+    std::string file_out_base_str;
+    std::vector<std::string> file_out_base_vec;
 
     // functions
-    void output_csv(std::string file_out_str);
-    void output_csv(std::string file_out_base_str, int ts);
+    void set_output(std::string file_out_str);
+    void output_csv();
+    void output_csv(int ts);
 
     // default constructor
     VariableTri3() {}
@@ -64,11 +72,11 @@ class VariableTri3
 
 };
 
-void VariableTri3::output_csv(std::string file_out_str)
+void VariableTri3::set_output(std::string file_out_str)
 {
     /*
 
-    Outputs a CSV file with the values of the variable.
+    Set the output CSV file name with the values of the variable.
 
     Arguments
     =========
@@ -81,15 +89,59 @@ void VariableTri3::output_csv(std::string file_out_str)
 
     Notes
     =====
+    file_out_str must have an asterisk '*' for transient simulations.
+    This will be replaced with the timestep number.
+
+    */
+
+    // set file name
+    file_out_base_str = file_out_str;
+
+    // generate CSV file when output_csv is called
+    is_file_out = true;
+
+    // split filename at '*'
+    // will be replaced with timestep later
+    std::stringstream file_out_base_stream(file_out_base_str);
+    std::string string_sub;
+    while(std::getline(file_out_base_stream, string_sub, '*'))
+    {
+        file_out_base_vec.push_back(string_sub);
+    }
+
+}
+
+void VariableTri3::output_csv()
+{
+    /*
+
+    Outputs a CSV file with the values of the variable.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =======
+    (none)
+
+    Notes
+    =====
     This function is intended to be used with steady-state simulations.
 
     */
 
+    // do not make file if filename not set
+    if (!is_file_out)
+    {
+        return;
+    }
+
     // initialize file stream
-    std::ofstream file_out_stream(file_out_str);
+    std::ofstream file_out_stream(file_out_base_str);
 
     // write to file
-    file_out_stream << "gid,position_x,position_y,value\n";
+    file_out_stream << "point_id,position_x,position_y,value\n";
     for (int pdid = 0; pdid < num_point; pdid++)
     {
         file_out_stream << domain_ptr->point_pdid_to_pgid_vec[pdid] << ",";
@@ -100,7 +152,7 @@ void VariableTri3::output_csv(std::string file_out_str)
 
 }
 
-void VariableTri3::output_csv(std::string file_out_base_str, int ts)
+void VariableTri3::output_csv(int ts)
 {
     /*
 
@@ -108,8 +160,6 @@ void VariableTri3::output_csv(std::string file_out_base_str, int ts)
 
     Arguments
     =========
-    file_out_base_str : string
-        Path to CSV file with base file name.
     ts : int
         Timestep number.
 
@@ -124,14 +174,10 @@ void VariableTri3::output_csv(std::string file_out_base_str, int ts)
 
     */
 
-    // split filename at '*'
-    // will be replaced with timestep later
-    std::vector<std::string> file_out_base_vec;
-    std::stringstream file_out_base_stream(file_out_base_str);
-    std::string string_sub;
-    while(std::getline(file_out_base_stream, string_sub, '*'))
+    // do not make file if filename not set
+    if (!is_file_out)
     {
-        file_out_base_vec.push_back(string_sub);
+        return;
     }
 
     // create output filename
@@ -146,7 +192,7 @@ void VariableTri3::output_csv(std::string file_out_base_str, int ts)
     std::ofstream file_out_stream(file_out_str);
 
     // write to file
-    file_out_stream << "gid,position_x,position_y,value\n";
+    file_out_stream << "point_id,position_x,position_y,value\n";
     for (int pdid = 0; pdid < num_point; pdid++)
     {
         file_out_stream << domain_ptr->point_pdid_to_pgid_vec[pdid] << ",";
