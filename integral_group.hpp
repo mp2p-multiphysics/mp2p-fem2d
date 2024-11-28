@@ -63,10 +63,13 @@ class IntegralGroup
     void evaluate_Ni();
     void evaluate_integral_Ni();
     void evaluate_integral_derivative_Ni_x();
+    void evaluate_integral_derivative_Ni_y();
     void evaluate_integral_Ni_Nj();
     void evaluate_integral_Ni_derivative_Nj_x();
+    void evaluate_integral_Ni_derivative_Nj_y();
     void evaluate_integral_div_Ni_dot_div_Nj();
     void evaluate_integral_Ni_Nj_derivative_Nk_x();
+    void evaluate_integral_Ni_Nj_derivative_Nk_y();
 
     // functions for computing boundary integrals
     void evaluate_boundary_Ni();
@@ -170,6 +173,34 @@ void IntegralGroup::evaluate_integral_derivative_Ni_x()
 
 }
 
+void IntegralGroup::evaluate_integral_derivative_Ni_y()
+{
+    /*
+
+    Calculates the integral of d(Ni)/dy.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */
+
+    // evaluate integrals in each domain
+    for (auto integral_ptr : integral_t3_ptr_vec)
+    {
+        integral_ptr->evaluate_integral_derivative_Ni_y();
+    }
+    for (auto integral_ptr : integral_q4_ptr_vec)
+    {
+        integral_ptr->evaluate_integral_derivative_Ni_y();
+    }
+
+}
+
 void IntegralGroup::evaluate_integral_Ni_Nj()
 {
     /*
@@ -226,6 +257,34 @@ void IntegralGroup::evaluate_integral_Ni_derivative_Nj_x()
 
 }
 
+void IntegralGroup::evaluate_integral_Ni_derivative_Nj_y()
+{
+    /*
+
+    Calculates the integral of Ni * d(Nj)/dy.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */
+
+    // evaluate integrals in each domain
+    for (auto integral_ptr : integral_t3_ptr_vec)
+    {
+        integral_ptr->evaluate_integral_Ni_derivative_Nj_y();
+    }
+    for (auto integral_ptr : integral_q4_ptr_vec)
+    {
+        integral_ptr->evaluate_integral_Ni_derivative_Nj_y();
+    }
+
+}
+
 void IntegralGroup::evaluate_integral_div_Ni_dot_div_Nj()
 {
     /*
@@ -278,6 +337,34 @@ void IntegralGroup::evaluate_integral_Ni_Nj_derivative_Nk_x()
     for (auto integral_ptr : integral_q4_ptr_vec)
     {
         integral_ptr->evaluate_integral_Ni_Nj_derivative_Nk_x();
+    }
+
+}
+
+void IntegralGroup::evaluate_integral_Ni_Nj_derivative_Nk_y()
+{
+    /*
+
+    Calculates the integral of Ni * Nj * d(Nk)/dy.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */
+
+    // evaluate integrals in each domain
+    for (auto integral_ptr : integral_t3_ptr_vec)
+    {
+        integral_ptr->evaluate_integral_Ni_Nj_derivative_Nk_y();
+    }
+    for (auto integral_ptr : integral_q4_ptr_vec)
+    {
+        integral_ptr->evaluate_integral_Ni_Nj_derivative_Nk_y();
     }
 
 }
