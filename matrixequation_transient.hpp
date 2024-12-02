@@ -164,28 +164,7 @@ class MatrixEquationTransient
             int start_row = variable_group_ptr->start_col;
 
             // iterate through each variable
-            for (auto variable_ptr : variable_group_ptr->variable_t3_ptr_vec)
-            {
-
-                // iterate through each global ID
-                for (auto pgid : variable_ptr->domain_ptr->point_pdid_to_pgid_vec)
-                {
-
-                    // get domain and group IDs
-                    int pfid = variable_group_ptr->point_pgid_to_pfid_map[pgid];
-                    int pdid = variable_ptr->domain_ptr->point_pgid_to_pdid_map[pgid];
-
-                    // get value from variable
-                    double value = variable_ptr->point_value_vec[pdid];
-
-                    // store value in x_vec
-                    int vec_row = start_row + pfid;
-                    x_vec.coeffRef(vec_row) = value;
-
-                }
-
-            }
-            for (auto variable_ptr : variable_group_ptr->variable_q4_ptr_vec)
+            for (auto variable_ptr : variable_group_ptr->variable_ptr_vec)
             {
 
                 // iterate through each global ID
@@ -389,28 +368,7 @@ void MatrixEquationTransient::store_solution()
         int start_row = variable_group_ptr->start_col;
 
         // iterate through each variable
-        for (auto variable_ptr : variable_group_ptr->variable_t3_ptr_vec)
-        {
-
-            // iterate through each global ID
-            for (auto pgid : variable_ptr->domain_ptr->point_pdid_to_pgid_vec)
-            {
-
-                // get domain and group IDs
-                int pfid = variable_group_ptr->point_pgid_to_pfid_map[pgid];
-                int pdid = variable_ptr->domain_ptr->point_pgid_to_pdid_map[pgid];
-
-                // get value from x_vec
-                int vec_row = start_row + pfid;
-                double value = x_vec.coeffRef(vec_row);
-
-                // store value in variable
-                variable_ptr->point_value_vec[pdid] = value;
-
-            }
-
-        }
-        for (auto variable_ptr : variable_group_ptr->variable_q4_ptr_vec)
+        for (auto variable_ptr : variable_group_ptr->variable_ptr_vec)
         {
 
             // iterate through each global ID

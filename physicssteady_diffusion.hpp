@@ -248,7 +248,6 @@ void PhysicsSteadyDiffusion::matrix_fill_domain
         VectorDouble diffcoeff_vec = diffusioncoefficient_ptr->get_neighbor_value(edid);
         VectorDouble gencoeff_vec = generationcoefficient_ptr->get_neighbor_value(edid);
 
-        // calculate a_mat coefficients
         // matrix row = start_row of test function (physics) + group ID of variable
         // matrix column = start_column of variable + group ID of variable
 
@@ -310,9 +309,6 @@ void PhysicsSteadyDiffusion::matrix_fill_natural
             // get boundary point data
             int indx_i = plid_vec[indx_b];
             VectorDouble parameter_vec = parameter_mat[indx_b];
-
-            // matrix row = start_row of test function (physics) + group ID of variable
-            // matrix column = start_column of variable + group ID of variable
 
             // apply boundary condition
             int mat_row = start_row + pfid_vec[indx_i];
