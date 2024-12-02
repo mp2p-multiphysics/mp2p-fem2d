@@ -12,7 +12,7 @@ class DomainUnit
 {
     /*
 
-    Domain made of quad4 elements.
+    Domain object.
 
     Variables
     =========
@@ -20,6 +20,9 @@ class DomainUnit
         Path to CSV file with data for domain points.
     file_in_element_str_in : string
         Path to CSV file with data for domain elements.
+    type_element_in : int
+        Denotes type of element.
+        Use 0, 1, 2, or 3 to for tri3, quad4, tri6, or quad8.
 
     Notes
     ====
@@ -32,8 +35,22 @@ class DomainUnit
         global point ID of local point 0
         global point ID of local point 1
         global point ID of local point 2
-        global point ID of local point 3
-    Points 0, 1, 2, and 3 are shown below for a quad4 element in local coordinates.
+        ...
+
+    Points 0 to 2 are shown below for a tri3 element in local coordinates.
+
+          (local y)
+             ^
+             |
+             2 \
+             |   \
+             |     \
+             |       \
+        <----1---------0------> (local x)
+             |
+             v
+    
+    Points 0 to 3 are shown below for a quad4 element in local coordinates.
 
                (local y)
                    ^
@@ -46,18 +63,31 @@ class DomainUnit
                    |
                    v
 
-    Points 0, 1, and 2 are shown below for a tri3 element in local coordinates.
+    Points 0 to 5 are shown below for a tri6 element in local coordinates.
 
           (local y)
              ^
              |
-             2 \
-             |   \
-             |     \
+             4 \
+             |   \ 
+             3     5
              |       \
-        <----1---------0------> (local x)
+        <----2----1----0------> (local x)
              |
              v
+    
+    Points 0 to 7 are shown below for a quad8 element in local coordinates.
+
+               (local y)
+                   ^
+                   |
+              2 ---3--- 4
+              |    |    | 
+        <-----1----+----5-----> (local x)     
+              |    |    |
+              0 ---7--- 6
+                   |
+                   v
 
     */
 

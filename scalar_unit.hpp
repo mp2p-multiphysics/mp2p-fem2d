@@ -14,7 +14,7 @@ class ScalarUnit
 {
     /*
 
-    Scalar applied over quad4 domain elements.
+    Scalar applied over a domain
 
     Variables (for constant values)
     =========
@@ -40,6 +40,8 @@ class ScalarUnit
         Outputs a CSV file with the values of the scalar.
     update_value : void
         Recalculates non-constant values.
+    get_neighbor_value : VectorDouble
+        Outputs a vector with the scalar values at points surrounding an element.
 
     Notes
     ====
@@ -290,6 +292,21 @@ void ScalarUnit::update_value()
 
 VectorDouble ScalarUnit::get_neighbor_value(int edid)
 {
+    /*
+    
+    Outputs a vector with the scalar values at points surrounding an element.
+
+    Arguments
+    =========
+    edid : int
+        Domain ID of the element.
+
+    Returns
+    =======
+    value_vec : VectorInt
+        vector with scalar values at points surrounding an element.
+
+    */
 
     // get point surrounding element
     VectorInt pgid_vec = domain_ptr->element_edid_plid_to_pgid_vec[edid];

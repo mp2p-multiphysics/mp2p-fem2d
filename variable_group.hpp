@@ -18,15 +18,15 @@ class VariableGroup
 
     Variables
     =========
-    variable_t3_ptr_vec_in : vector<VariableTri3*>
-        vector with pointers to VariableTri3 objects.
-    variable_q4_ptr_vec_in : vector<VariableQuad4*>
-        vector with pointers to VariableQuad4 objects.
+    variable_ptr_vec_in : vector<VariableUnit*>
+        vector with pointers to VariableUnit objects.
 
     Functions
     =========
     output_csv : void
         Outputs a CSV file with the values of the variable.
+    get_neighbor_pfid : VectorInt
+        Outputs a vector with the group IDs of the points surrounding an element.
 
     */
 
@@ -155,6 +155,23 @@ void VariableGroup::output_csv(int ts)
 
 VectorInt VariableGroup::get_neighbor_pfid(DomainUnit* domain_ptr, int edid)
 {
+    /*
+    
+    Outputs a vector with the group IDs of the points surrounding an element.
+
+    Arguments
+    =========
+    domain_ptr : DomainUnit*
+        Pointer to DomainUnit object with element.
+    edid : int
+        Domain ID of the element.
+
+    Returns
+    =======
+    pfid_vec : VectorInt
+        vector with group IDs of the points surrounding the element.
+
+    */
 
     // get surrounding points
     VectorInt pgid_vec = domain_ptr->element_edid_plid_to_pgid_vec[edid];

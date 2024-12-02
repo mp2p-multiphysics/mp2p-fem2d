@@ -14,10 +14,8 @@ class BoundaryGroup
 
     Variables
     =========
-    boundary_t3_ptr_vec_in : vector<BoundaryTri3*>
-        vector with pointers to BoundaryTri3 objects.
-    boundary_q4_ptr_vec_in : vector<BoundaryQuad4*>
-        vector with pointers to BoundaryQuad4 objects.
+    boundary_ptr_vec_in : vector<BoundaryUnit*>
+        vector with pointers to BoundaryUnit objects.
 
     Functions
     =========

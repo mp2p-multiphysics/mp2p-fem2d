@@ -18,10 +18,8 @@ class ScalarGroup
 
     Variables
     =========
-    scalar_t3_ptr_vec_in : vector<ScalarTri3*>
-        vector with pointers to ScalarTri3 objects.
-    scalar_q4_ptr_vec_in : vector<ScalarQuad4*>
-        vector with pointers to ScalarQuad4 objects.
+    scalar_ptr_vec_in : vector<ScalarUnit*>
+        vector with pointers to ScalarUnit objects.
 
     Functions
     =========

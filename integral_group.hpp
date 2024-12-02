@@ -14,16 +14,11 @@ class IntegralGroup
 
     Variables
     =========
-    integral_ptr_vec_in : vector<IntegralTri3*>
-        vector with pointers to IntegralTri3 objects.
-    integral_q4_ptr_vec_in : vector<IntegralQuad4*>
-        vector with pointers to IntegralQuad4 objects.
+    integral_ptr_vec_in : vector<IntegralUnit*>
+        vector with pointers to IntegralUnit objects.
 
     Functions
     =========
-    evaluate_Ni : void
-        Calculates test function values and other properties.
-        Must be called before domain integrals are evaluated.
     evaluate_integral_Ni : void
         Calculates the integral of Ni.
     evaluate_integral_derivative_Ni_x : void
@@ -42,9 +37,6 @@ class IntegralGroup
         Calculates the integral of Ni * Nj * d(Nk)/dx.
     evaluate_integral_Ni_Nj_derivative_Nk_y : void
         Calculates the integral of Ni * Nj * d(Nk)/dy.
-    evaluate_boundary_Ni : void
-        Calculates test functions values and other properties at the boundary.
-        Must be called before boundary integrals are evaluated.
     evaluate_integral_boundary_Ni : void
         Calculates the integral of Ni at the boundary.
     evaluate_integral_boundary_Ni_Nj : void

@@ -16,11 +16,11 @@ class BoundaryUnit
 {
     /*
 
-    Boundary conditions (BC) for quad4 mesh elements.
+    Boundary conditions (BC) applied on a domain.
 
     Variables
     =========
-    domain_in : DomainQuad4
+    domain_in : DomainUnit
         Domain where boundary conditions are applied.
     file_in_str_in : string
         Path to CSV file with data for BCs.
@@ -38,7 +38,7 @@ class BoundaryUnit
     ====
     The input CSV file must have the following columns:
         global element ID where BC is applied
-        local point ID where BC is applied (0 to 3)
+        local point ID where BC is applied
         BC configuration ID
 
     */

@@ -13,20 +13,17 @@ class IntegralUnit
 {
     /*
 
-    Test function (N) integrals for quad4 elements.
+    Test function (N) integrals over a domain.
 
     Variables
     =========
-    domain_in : DomainQuad4
+    domain_in : DomainUnit
         Domain where element integrals are calculated.
-    boundary_in : BoundaryQuad4
+    boundary_in : BoundaryUnit
         Boundaries where element integrals are calculated.
 
     Functions
     =========
-    evaluate_Ni : void
-        Calculates test function values and other properties.
-        Must be called before domain integrals are evaluated.
     evaluate_integral_Ni : void
         Calculates the integral of Ni.
     evaluate_integral_derivative_Ni_x : void
@@ -45,9 +42,8 @@ class IntegralUnit
         Calculates the integral of Ni * Nj * d(Nk)/dx.
     evaluate_integral_Ni_Nj_derivative_Nk_y : void
         Calculates the integral of Ni * Nj * d(Nk)/dy.
-    evaluate_boundary_Ni : void
-        Calculates test functions values and other properties at the boundary.
-        Must be called before boundary integrals are evaluated.
+    get_boundary_key : int
+        Calculates the boundary key used to access boundary integral values.
     evaluate_integral_boundary_Ni : void
         Calculates the integral of Ni at the boundary.
     evaluate_integral_boundary_Ni_Nj : void
@@ -62,9 +58,6 @@ class IntegralUnit
     Values of the boundary integrals can be accessed from each vector using the following pattern:
         integral_vec[edid][boundary_key][i][j]...
         wherein boundary_key is an int denoting the location of the boundary.
-        For quad4 elements, the boundary_key is computed using the following pairing function:
-        helper_num = pa_plid + pb_plid + 1
-        boundary_key = (helper_num*helper_num - helper_num % 2)/4 + min(pa_plid, pb_plid)
 
     */
 
@@ -531,7 +524,22 @@ void IntegralUnit::evaluate_integral_Ni_Nj_derivative_Nk_y()
 
 int IntegralUnit::get_boundary_key(VectorInt plid_vec)
 {
-    
+    /*
+
+    Calculates the boundary key used to access boundary integral values.
+
+    Arguments
+    =========
+    plid_vec : VectorInt
+        vector of local points along a boundary.
+
+    Returns
+    =======
+    boundary_key : int
+        int representing each boundary.
+
+    */
+
     // sort vector
     std::sort(plid_vec.begin(), plid_vec.end());
 
@@ -652,20 +660,6 @@ void IntegralUnit::evaluate_integral_boundary_Ni_Nj()
 
 void IntegralUnit::evaluate_Ni_tri3()
 {
-    /*
-
-    Calculates test function values and other properties.
-    Must be called before integrals are evaluated.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
 
     // weights for integration
     const double M_1_6 = 1./6.;
@@ -789,20 +783,6 @@ void IntegralUnit::evaluate_Ni_tri3()
 
 void IntegralUnit::evaluate_Ni_quad4()
 {
-    /*
-
-    Calculates test function values and other properties.
-    Must be called before integrals are evaluated.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
 
     // weights for integration
     weight_vec = {1., 1., 1., 1.};
@@ -932,20 +912,6 @@ void IntegralUnit::evaluate_Ni_quad4()
 
 void IntegralUnit::evaluate_boundary_Ni_tri3()
 {
-    /*
-
-    Calculates test function values and other properties at the boundary.
-    Must be called before bounary integrals are evaluated.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
 
     // initialize 2D integration points (within element)
     const double M_1_SQRT_3 = 1./sqrt(3);
@@ -1108,20 +1074,6 @@ void IntegralUnit::evaluate_boundary_Ni_tri3()
 
 void IntegralUnit::evaluate_boundary_Ni_quad4()
 {
-    /*
-
-    Calculates test function values and other properties at the boundary.
-    Must be called before bounary integrals are evaluated.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
 
     // initialize 2D integration points (within element)
     const double M_1_SQRT_3 = 1./sqrt(3);

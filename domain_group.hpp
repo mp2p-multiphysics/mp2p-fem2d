@@ -14,10 +14,8 @@ class DomainGroup
 
     Variables
     =========
-    domain_t3_ptr_vec_in : vector<DomainTri3*>
-        vector with pointers to DomainTri3 objects.
-    domain_q4_ptr_vec_in : vector<DomainQuad4*>
-        vector with pointers to DomainQuad4 objects.
+    domain_ptr_vec_in : vector<DomainUnit*>
+        vector with pointers to DomainUnit objects.
 
     */
 

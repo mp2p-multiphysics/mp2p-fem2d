@@ -12,7 +12,7 @@ class VariableUnit
 {
     /*
 
-    Variable applied over quad4 domain elements.
+    Variable applied over a domain.
 
     Variables
     =========
