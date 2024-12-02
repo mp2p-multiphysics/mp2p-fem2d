@@ -1,16 +1,16 @@
-#ifndef SCALAR_QUAD4
-#define SCALAR_QUAD4
+#ifndef SCALAR_UNIT
+#define SCALAR_UNIT
 #include <fstream>
 #include <sstream>
 #include <functional>
 #include "container_typedef.hpp"
-#include "domain_quad4.hpp"
-#include "variable_quad4.hpp"
+#include "domain_unit.hpp"
+#include "variable_unit.hpp"
 
 namespace FEM2D
 {
 
-class ScalarQuad4
+class ScalarUnit
 {
     /*
 
@@ -52,17 +52,16 @@ class ScalarQuad4
     public:
 
     // domain where variable is applied
-    DomainQuad4* domain_ptr;
+    DomainUnit* domain_ptr;
 
     // values in scalar
     VectorDouble point_value_vec;  // key: point domain ID; value: value
-    Vector2D element_value_vec;  // key: element domain ID, point local ID; value: value
 
     // use for non-constant scalars
     bool is_value_constant = true;
     double value_constant = 0;  // used if value is constant
     std::function<double(double, double, VectorDouble)> value_function;  // used if value is non-constant
-    std::vector<VariableQuad4*> variable_ptr_vec;  // variables that values depend on
+    std::vector<VariableUnit*> variable_ptr_vec;  // variables that values depend on
 
     // use for generating csv file
     bool is_file_out = false;
@@ -74,12 +73,13 @@ class ScalarQuad4
     void output_csv();
     void output_csv(int ts);
     void update_value();
+    VectorDouble get_neighbor_value(int edid);
 
     // default constructor
-    ScalarQuad4() {}
+    ScalarUnit() {}
     
     // constructor for constant values
-    ScalarQuad4(DomainQuad4 &domain_in, double value_constant_in)
+    ScalarUnit(DomainUnit &domain_in, double value_constant_in)
     {
 
         // store domain
@@ -95,7 +95,7 @@ class ScalarQuad4
     }
 
     // constructor for non-constant values
-    ScalarQuad4(DomainQuad4 &domain_in, std::function<double(double, double, VectorDouble)> value_function_in, std::vector<VariableQuad4*> variable_ptr_vec_in)
+    ScalarUnit(DomainUnit &domain_in, std::function<double(double, double, VectorDouble)> value_function_in, std::vector<VariableUnit*> variable_ptr_vec_in)
     {
 
         // store domain
@@ -113,7 +113,7 @@ class ScalarQuad4
 
 };
 
-void ScalarQuad4::set_output(std::string file_out_str)
+void ScalarUnit::set_output(std::string file_out_str)
 {
     /*
 
@@ -152,7 +152,7 @@ void ScalarQuad4::set_output(std::string file_out_str)
 
 }
 
-void ScalarQuad4::output_csv()
+void ScalarUnit::output_csv()
 {
     /*
 
@@ -193,7 +193,7 @@ void ScalarQuad4::output_csv()
 
 }
 
-void ScalarQuad4::output_csv(int ts)
+void ScalarUnit::output_csv(int ts)
 {
     /*
 
@@ -244,7 +244,7 @@ void ScalarQuad4::output_csv(int ts)
 
 }
 
-void ScalarQuad4::update_value()
+void ScalarUnit::update_value()
 {
     /*
 
@@ -285,6 +285,27 @@ void ScalarQuad4::update_value()
         point_value_vec[pdid] = value_function(position_x, position_y, value_vec);
 
     }
+
+}
+
+VectorDouble ScalarUnit::get_neighbor_value(int edid)
+{
+
+    // get point surrounding element
+    VectorInt pgid_vec = domain_ptr->element_edid_plid_to_pgid_vec[edid];
+
+    // initialize vector with values
+    VectorDouble value_vec;
+
+    // iterate through each point and get value
+    for (int pgid : pgid_vec)
+    {
+        int pdid = domain_ptr->point_pgid_to_pdid_map[pgid];
+        double value_sub = point_value_vec[pdid];
+        value_vec.push_back(value_sub);
+    }
+
+    return value_vec;
 
 }
 

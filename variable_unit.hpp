@@ -1,14 +1,14 @@
-#ifndef VARIABLE_QUAD4
-#define VARIABLE_QUAD4
+#ifndef VARIABLE_UNIT
+#define VARIABLE_UNIT
 #include <fstream>
 #include <sstream>
-#include "domain_quad4.hpp"
+#include "domain_unit.hpp"
 #include "container_typedef.hpp"
 
 namespace FEM2D
 {
 
-class VariableQuad4
+class VariableUnit
 {
     /*
 
@@ -33,10 +33,9 @@ class VariableQuad4
     public:
 
     // domain where variable is applied
-    DomainQuad4* domain_ptr;  
+    DomainUnit* domain_ptr;  
 
     // values in variable
-    int num_point = 0;  // number of points in domain
     VectorDouble point_value_vec;  // key: domain ID; value: value
     
     // use for generating csv file
@@ -50,20 +49,17 @@ class VariableQuad4
     void output_csv(int ts);
 
     // default constructor
-    VariableQuad4() {}
+    VariableUnit() {}
 
     // constructor
-    VariableQuad4(DomainQuad4 &domain_in, double value_initial_in)
+    VariableUnit(DomainUnit &domain_in, double value_initial_in)
     {
 
         // store domain
         domain_ptr = &domain_in;
 
-        // get number of domain points
-        num_point = domain_ptr->num_point;
-
         // populate value vector with initial values
-        for (int pdid = 0; pdid < num_point; pdid++)
+        for (int pdid = 0; pdid < domain_ptr->num_point; pdid++)
         {
             point_value_vec.push_back(value_initial_in);
         }
@@ -72,7 +68,7 @@ class VariableQuad4
 
 };
 
-void VariableQuad4::set_output(std::string file_out_str)
+void VariableUnit::set_output(std::string file_out_str)
 {
     /*
 
@@ -111,7 +107,7 @@ void VariableQuad4::set_output(std::string file_out_str)
 
 }
 
-void VariableQuad4::output_csv()
+void VariableUnit::output_csv()
 {
     /*
 
@@ -142,7 +138,7 @@ void VariableQuad4::output_csv()
 
     // write to file
     file_out_stream << "point_id,position_x,position_y,value\n";
-    for (int pdid = 0; pdid < num_point; pdid++)
+    for (int pdid = 0; pdid < domain_ptr->num_point; pdid++)
     {
         file_out_stream << domain_ptr->point_pdid_to_pgid_vec[pdid] << ",";
         file_out_stream << domain_ptr->point_position_x_vec[pdid] << ",";
@@ -152,7 +148,7 @@ void VariableQuad4::output_csv()
 
 }
 
-void VariableQuad4::output_csv(int ts)
+void VariableUnit::output_csv(int ts)
 {
     /*
 
@@ -195,7 +191,7 @@ void VariableQuad4::output_csv(int ts)
 
     // write to file
     file_out_stream << "point_id,position_x,position_y,value\n";
-    for (int pdid = 0; pdid < num_point; pdid++)
+    for (int pdid = 0; pdid < domain_ptr->num_point; pdid++)
     {
         file_out_stream << domain_ptr->point_pdid_to_pgid_vec[pdid] << ",";
         file_out_stream << domain_ptr->point_position_x_vec[pdid] << ",";

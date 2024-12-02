@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <vector>
 #include "container_typedef.hpp"
-#include "variable_quad4.hpp"
-#include "variable_tri3.hpp"
+#include "domain_unit.hpp"
+#include "variable_unit.hpp"
 
 namespace FEM2D
 {
@@ -40,8 +40,7 @@ class VariableGroup
     MapIntInt point_pgid_to_pfid_map;  // key: global ID; value: group ID
 
     // variables and domains
-    std::vector<VariableTri3*> variable_t3_ptr_vec;  // vector of variables
-    std::vector<VariableQuad4*> variable_q4_ptr_vec;  // vector of variables
+    std::vector<VariableUnit*> variable_ptr_vec;  // vector of variables
 
     // starting column of variables in matrix equation
     int start_col = -1;
@@ -49,17 +48,17 @@ class VariableGroup
     // functions
     void output_csv();
     void output_csv(int ts);
+    VectorInt get_neighbor_pfid(DomainUnit* domain_ptr, int edid);
 
     // default constructor
     VariableGroup() {}
 
     // constructor
-    VariableGroup(std::vector<VariableTri3*> variable_t3_ptr_vec_in, std::vector<VariableQuad4*> variable_q4_ptr_vec_in)
+    VariableGroup(std::vector<VariableUnit*> variable_ptr_vec_in)
     {
         
         // store vector of variables
-        variable_t3_ptr_vec = variable_t3_ptr_vec_in;
-        variable_q4_ptr_vec = variable_q4_ptr_vec_in;
+        variable_ptr_vec = variable_ptr_vec_in;
 
         // get set of global IDs
         // map global IDs and group IDs
@@ -68,14 +67,7 @@ class VariableGroup
         std::set<int> point_pgid_set;  
 
         // iterate through each variable and get set of global IDs
-        for (auto variable_ptr : variable_t3_ptr_vec)
-        {
-            for (auto &pgid : variable_ptr->domain_ptr->point_pdid_to_pgid_vec)
-            {
-                point_pgid_set.insert(pgid);
-            }
-        }
-        for (auto variable_ptr : variable_q4_ptr_vec)
+        for (auto variable_ptr : variable_ptr_vec)
         {
             for (auto &pgid : variable_ptr->domain_ptr->point_pdid_to_pgid_vec)
             {
@@ -129,11 +121,7 @@ void VariableGroup::output_csv()
     */
 
     // iterate through each variable
-    for (auto variable_ptr : variable_t3_ptr_vec)
-    {
-        variable_ptr->output_csv();
-    }
-    for (auto variable_ptr : variable_q4_ptr_vec)
+    for (auto variable_ptr : variable_ptr_vec)
     {
         variable_ptr->output_csv();
     }
@@ -158,14 +146,30 @@ void VariableGroup::output_csv(int ts)
     */
 
     // iterate through each variable
-    for (auto variable_ptr : variable_t3_ptr_vec)
+    for (auto variable_ptr : variable_ptr_vec)
     {
         variable_ptr->output_csv(ts);
     }
-    for (auto variable_ptr : variable_q4_ptr_vec)
+
+}
+
+VectorInt VariableGroup::get_neighbor_pfid(DomainUnit* domain_ptr, int edid)
+{
+
+    // get surrounding points
+    VectorInt pgid_vec = domain_ptr->element_edid_plid_to_pgid_vec[edid];
+
+    // initialize pfid vector
+    VectorInt pfid_vec;
+
+    // iterate for each point and get pfid
+    for (int pgid : pgid_vec)
     {
-        variable_ptr->output_csv(ts);
+        int pfid = point_pgid_to_pfid_map[pgid];
+        pfid_vec.push_back(pfid);
     }
+    
+    return pfid_vec;
 
 }
 

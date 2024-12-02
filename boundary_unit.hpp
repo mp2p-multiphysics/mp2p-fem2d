@@ -1,25 +1,26 @@
-#ifndef BOUNDARY_TRI3
-#define BOUNDARY_TRI3
+#ifndef BOUNDARY_UNIT
+#define BOUNDARY_UNIT
 #include <fstream>
 #include <functional>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
 #include "container_typedef.hpp"
-#include "variable_tri3.hpp"
+#include "domain_unit.hpp"
+#include "variable_unit.hpp"
 
 namespace FEM2D
 {
 
-class BoundaryTri3
+class BoundaryUnit
 {
     /*
 
-    Boundary conditions (BC) for tri3 mesh elements.
+    Boundary conditions (BC) for quad4 mesh elements.
 
     Variables
     =========
-    domain_in : DomainTri3
+    domain_in : DomainQuad4
         Domain where boundary conditions are applied.
     file_in_str_in : string
         Path to CSV file with data for BCs.
@@ -37,7 +38,7 @@ class BoundaryTri3
     ====
     The input CSV file must have the following columns:
         global element ID where BC is applied
-        local point ID where BC is applied (0 to 2)
+        local point ID where BC is applied (0 to 3)
         BC configuration ID
 
     */
@@ -49,69 +50,77 @@ class BoundaryTri3
     // beid - boundary essential ID - used to index essential BC data
     // btid - boundary type ID - denotes type of BC
     // bcid - boundary config ID - denotes location of BC
+    // blid - boundary local ID - local point along boundary
     // vectors use did as input
 
     // mesh where variable is applied
-    DomainTri3* domain_ptr;
+    DomainUnit* domain_ptr;
 
-    // file names
-    std::string file_in_str;
+    // type of element
+    // 0 - tri3; 1 - quad4; 2 - tri6; 3 - quad8
+    int num_neighbor = 0;
 
     // boundary condition data
     // index with bid
     int num_boundary = 0;
     VectorInt boundary_egid_vec;
-    VectorInt boundary_pa_plid_vec;
-    VectorInt boundary_pb_plid_vec;
     VectorInt boundary_bcid_vec;
     VectorInt boundary_btid_vec;
-    Vector2D boundary_pa_parameter_vec;
-    Vector2D boundary_pb_parameter_vec;
+    VectorInt2D boundary_blid_to_plid_vec;  // [bid][blid] -> plid
+    VectorDouble3D boundary_blid_to_parameter_vec; // [bid][blid] -> parameter_vec
 
     // use for non-constant boundary conditions
     // index with bcid
     std::unordered_map<int, bool> boundary_is_parameter_constant_map;
     std::unordered_map<int, std::function<VectorDouble(double, double, VectorDouble)>> boundary_parameter_function_map;
-    std::unordered_map<int, std::vector<VariableTri3*>> boundary_variable_ptr_map;
+    std::unordered_map<int, std::vector<VariableUnit*>> boundary_variable_ptr_map;
 
     // essential boundary condition data
     // index with beid
     int num_essential = 0;
     VectorInt essential_egid_vec;
-    VectorInt essential_pa_plid_vec;
-    VectorInt essential_pb_plid_vec;
     VectorInt essential_bcid_vec;
     VectorInt essential_btid_vec;
-    Vector2D essential_pa_parameter_vec;
-    Vector2D essential_pb_parameter_vec;
+    VectorInt2D essential_blid_to_plid_vec;  // [beid][blid] -> plid
+    VectorDouble3D essential_blid_to_parameter_vec; // [beid][blid] -> parameter_vec
 
     // natural boundary condition data
     // index with bnid
     int num_natural = 0;
     VectorInt natural_egid_vec;
-    VectorInt natural_pa_plid_vec;
-    VectorInt natural_pb_plid_vec;
     VectorInt natural_bcid_vec;
     VectorInt natural_btid_vec;
-    Vector2D natural_pa_parameter_vec;
-    Vector2D natural_pb_parameter_vec;
+    VectorInt2D natural_blid_to_plid_vec;  // [bnid][blid] -> plid
+    VectorDouble3D natural_blid_to_parameter_vec; // [bnid][blid] -> parameter_vec
+
+    // file names
+    std::string file_in_str;
 
     // functions
     void set_boundary(int boundaryconfig_id, int boundarytype_id, VectorDouble parameter_vec);
-    void set_boundary(int boundaryconfig_id, int boundarytype_id, std::function<VectorDouble(double, double, VectorDouble)> parameter_function, std::vector<VariableTri3*> variable_ptr_vec);
+    void set_boundary(int boundaryconfig_id, int boundarytype_id, std::function<VectorDouble(double, double, VectorDouble)> parameter_function, std::vector<VariableUnit*> variable_ptr_vec);
     void set_boundary_type(VectorInt boundarytype_essential_vec, VectorInt boundarytype_natural_vec);
     void update_parameter();
 
     // default constructor
-    BoundaryTri3() {}
+    BoundaryUnit() {}
 
     // constructor
-    BoundaryTri3(DomainTri3 &domain_in, std::string file_in_str_in)
+    BoundaryUnit(DomainUnit &domain_in, std::string file_in_str_in)
     {
 
         // store variables
         domain_ptr = &domain_in;
         file_in_str = file_in_str_in;
+
+        // get number of neighboring points per boundary
+        switch (domain_ptr->type_element)
+        {
+            case 0: num_neighbor = 2; break;  // tri3
+            case 1: num_neighbor = 2; break;  // quad4
+            case 2: num_neighbor = 3; break;  // tri6
+            case 3: num_neighbor = 3; break;  // quad8
+        }
 
         // read input files and store boundary condition data
         read_boundary(file_in_str);
@@ -123,7 +132,7 @@ class BoundaryTri3
 
 };
 
-void BoundaryTri3::set_boundary(int boundaryconfig_id, int boundarytype_id, VectorDouble parameter_vec)
+void BoundaryUnit::set_boundary(int boundaryconfig_id, int boundarytype_id, VectorDouble parameter_vec)
 {
     /*
 
@@ -162,8 +171,7 @@ void BoundaryTri3::set_boundary(int boundaryconfig_id, int boundarytype_id, Vect
 
         // set boundary type and parameters
         boundary_btid_vec[bid] = boundarytype_id;
-        boundary_pa_parameter_vec[bid] = parameter_vec;
-        boundary_pb_parameter_vec[bid] = parameter_vec;
+        boundary_blid_to_parameter_vec[bid] = VectorDouble2D(num_neighbor, parameter_vec);
 
     }
 
@@ -172,7 +180,7 @@ void BoundaryTri3::set_boundary(int boundaryconfig_id, int boundarytype_id, Vect
 
 }
 
-void BoundaryTri3::set_boundary(int boundaryconfig_id, int boundarytype_id, std::function<VectorDouble(double, double, VectorDouble)> parameter_function, std::vector<VariableTri3*> variable_ptr_vec)
+void BoundaryUnit::set_boundary(int boundaryconfig_id, int boundarytype_id, std::function<VectorDouble(double, double, VectorDouble)> parameter_function, std::vector<VariableUnit*> variable_ptr_vec)
 {
     /*
 
@@ -186,7 +194,7 @@ void BoundaryTri3::set_boundary(int boundaryconfig_id, int boundarytype_id, std:
         BC type ID assigned to BC configuration ID.
     parameter_function : function<double, double, VectorDouble> -> VectorDouble
         Function used to compute parameter values based on variable values.
-    variable_ptr_vec : vector<VariableTri3*>
+    variable_ptr_vec : vector<VariableQuad4*>
         vector of pointers to variable objects needed to compute parameter values.
 
     Returns
@@ -226,7 +234,7 @@ void BoundaryTri3::set_boundary(int boundaryconfig_id, int boundarytype_id, std:
 
 }
 
-void BoundaryTri3::set_boundary_type(VectorInt boundarytype_essential_vec, VectorInt boundarytype_natural_vec)
+void BoundaryUnit::set_boundary_type(VectorInt boundarytype_essential_vec, VectorInt boundarytype_natural_vec)
 {
     /*
 
@@ -258,12 +266,10 @@ void BoundaryTri3::set_boundary_type(VectorInt boundarytype_essential_vec, Vecto
         {
             num_essential++;
             essential_egid_vec.push_back(boundary_egid_vec[bid]);
-            essential_pa_plid_vec.push_back(boundary_pa_plid_vec[bid]);
-            essential_pb_plid_vec.push_back(boundary_pb_plid_vec[bid]);
             essential_bcid_vec.push_back(boundary_bcid_vec[bid]);
             essential_btid_vec.push_back(boundary_btid_vec[bid]);
-            essential_pa_parameter_vec.push_back(boundary_pa_parameter_vec[bid]);
-            essential_pb_parameter_vec.push_back(boundary_pb_parameter_vec[bid]);
+            essential_blid_to_plid_vec.push_back(boundary_blid_to_plid_vec[bid]);
+            essential_blid_to_parameter_vec.push_back(boundary_blid_to_parameter_vec[bid]);
         }
 
         // fill up vectors for natural boundary conditions
@@ -272,19 +278,17 @@ void BoundaryTri3::set_boundary_type(VectorInt boundarytype_essential_vec, Vecto
         {
             num_natural++;
             natural_egid_vec.push_back(boundary_egid_vec[bid]);
-            natural_pa_plid_vec.push_back(boundary_pa_plid_vec[bid]);
-            natural_pb_plid_vec.push_back(boundary_pb_plid_vec[bid]);
             natural_bcid_vec.push_back(boundary_bcid_vec[bid]);
             natural_btid_vec.push_back(boundary_btid_vec[bid]);
-            natural_pa_parameter_vec.push_back(boundary_pa_parameter_vec[bid]);
-            natural_pb_parameter_vec.push_back(boundary_pb_parameter_vec[bid]);
+            natural_blid_to_plid_vec.push_back(boundary_blid_to_plid_vec[bid]);
+            natural_blid_to_parameter_vec.push_back(boundary_blid_to_parameter_vec[bid]);
         }
 
     }
 
 }
 
-void BoundaryTri3::update_parameter()
+void BoundaryUnit::update_parameter()
 {
     /*
 
@@ -313,44 +317,36 @@ void BoundaryTri3::update_parameter()
             continue;
         }
 
-        // get element where boundary is applied
+        // get element and surrounding points
         int egid = essential_egid_vec[beid];
         int edid = domain_ptr->element_egid_to_edid_map[egid];
+        VectorInt pgid_vec = domain_ptr->element_edid_plid_to_pgid_vec[edid];
 
-        // get points surrounding the element
-        int p0_pgid = domain_ptr->element_p0_pgid_vec[edid];
-        int p1_pgid = domain_ptr->element_p1_pgid_vec[edid];
-        int p2_pgid = domain_ptr->element_p2_pgid_vec[edid];
-        int pgid_arr[3] = {p0_pgid, p1_pgid, p2_pgid};
-
-        // get point where boundary is applied
-        int pa_plid = essential_pa_plid_vec[beid];
-        int pb_plid = essential_pb_plid_vec[beid];
-        int pa_pgid = pgid_arr[pa_plid];
-        int pb_pgid = pgid_arr[pb_plid];
-        int pa_pdid = domain_ptr->point_pgid_to_pdid_map[pa_pgid];
-        int pb_pdid = domain_ptr->point_pgid_to_pdid_map[pb_pgid];
-
-        // subset location on mesh
-        double pa_position_x = domain_ptr->point_position_x_vec[pa_pdid];
-        double pb_position_x = domain_ptr->point_position_x_vec[pb_pdid];
-        double pa_position_y = domain_ptr->point_position_y_vec[pa_pdid];
-        double pb_position_y = domain_ptr->point_position_y_vec[pb_pdid];
-
-        // subset value of variables
-        VectorDouble pa_value_vec;
-        VectorDouble pb_value_vec;
-        for (auto variable_ptr : boundary_variable_ptr_map[bcid])
+        // iterate through each boundary point
+        for (int blid = 0; blid < num_neighbor; blid++)
         {
-            double pa_value_sub = variable_ptr->point_value_vec[pa_pdid];
-            double pb_value_sub = variable_ptr->point_value_vec[pb_pdid];
-            pa_value_vec.push_back(pa_value_sub);
-            pb_value_vec.push_back(pb_value_sub);
-        }
 
-        // calculate parameter value
-        essential_pa_parameter_vec[beid] = boundary_parameter_function_map[bcid](pa_position_x, pa_position_y, pa_value_vec);
-        essential_pb_parameter_vec[beid] = boundary_parameter_function_map[bcid](pb_position_x, pb_position_y, pb_value_vec);
+            // get boundary point
+            int plid = essential_blid_to_plid_vec[beid][blid];
+            int pgid = pgid_vec[blid];
+            int pdid = domain_ptr->point_pgid_to_pdid_map[pgid];
+
+            // subset location on mesh
+            double position_x = domain_ptr->point_position_x_vec[pdid];
+            double position_y = domain_ptr->point_position_y_vec[pdid];
+
+            // subset value of variables
+            VectorDouble value_vec;
+            for (auto variable_ptr : boundary_variable_ptr_map[bcid])
+            {
+                double value_sub = variable_ptr->point_value_vec[pdid];
+                value_vec.push_back(value_sub);
+            }
+
+            // calculate parameter value
+            essential_blid_to_parameter_vec[beid][blid] = boundary_parameter_function_map[bcid](position_x, position_y, value_vec);
+
+        }
 
     }
 
@@ -367,50 +363,42 @@ void BoundaryTri3::update_parameter()
             continue;
         }
 
-        // get element where boundary is applied
+        // get element and surrounding points
         int egid = natural_egid_vec[bnid];
         int edid = domain_ptr->element_egid_to_edid_map[egid];
+        VectorInt pgid_vec = domain_ptr->element_edid_plid_to_pgid_vec[edid];
 
-        // get points surrounding the element
-        int p0_pgid = domain_ptr->element_p0_pgid_vec[edid];
-        int p1_pgid = domain_ptr->element_p1_pgid_vec[edid];
-        int p2_pgid = domain_ptr->element_p2_pgid_vec[edid];
-        int pgid_arr[3] = {p0_pgid, p1_pgid, p2_pgid};
-
-        // get point where boundary is applied
-        int pa_plid = natural_pa_plid_vec[bnid];
-        int pb_plid = natural_pb_plid_vec[bnid];
-        int pa_pgid = pgid_arr[pa_plid];
-        int pb_pgid = pgid_arr[pb_plid];
-        int pa_pdid = domain_ptr->point_pgid_to_pdid_map[pa_pgid];
-        int pb_pdid = domain_ptr->point_pgid_to_pdid_map[pb_pgid];
-
-        // subset location on mesh
-        double pa_position_x = domain_ptr->point_position_x_vec[pa_pdid];
-        double pb_position_x = domain_ptr->point_position_x_vec[pb_pdid];
-        double pa_position_y = domain_ptr->point_position_y_vec[pa_pdid];
-        double pb_position_y = domain_ptr->point_position_y_vec[pb_pdid];
-
-        // subset value of variables
-        VectorDouble pa_value_vec;
-        VectorDouble pb_value_vec;
-        for (auto variable_ptr : boundary_variable_ptr_map[bcid])
+        // iterate through each boundary point
+        for (int blid = 0; blid < num_neighbor; blid++)
         {
-            double pa_value_sub = variable_ptr->point_value_vec[pa_pdid];
-            double pb_value_sub = variable_ptr->point_value_vec[pb_pdid];
-            pa_value_vec.push_back(pa_value_sub);
-            pb_value_vec.push_back(pb_value_sub);
-        }
 
-        // calculate parameter value
-        natural_pa_parameter_vec[bnid] = boundary_parameter_function_map[bcid](pa_position_x, pa_position_y, pa_value_vec);
-        natural_pb_parameter_vec[bnid] = boundary_parameter_function_map[bcid](pb_position_x, pb_position_y, pb_value_vec);
+            // get boundary point
+            int plid = natural_blid_to_plid_vec[bnid][blid];
+            int pgid = pgid_vec[blid];
+            int pdid = domain_ptr->point_pgid_to_pdid_map[pgid];
+
+            // subset location on mesh
+            double position_x = domain_ptr->point_position_x_vec[pdid];
+            double position_y = domain_ptr->point_position_y_vec[pdid];
+
+            // subset value of variables
+            VectorDouble value_vec;
+            for (auto variable_ptr : boundary_variable_ptr_map[bcid])
+            {
+                double value_sub = variable_ptr->point_value_vec[pdid];
+                value_vec.push_back(value_sub);
+            }
+
+            // calculate parameter value
+            natural_blid_to_parameter_vec[bnid][blid] = boundary_parameter_function_map[bcid](position_x, position_y, value_vec);
+
+        }
 
     }
 
 }
 
-void BoundaryTri3::read_boundary(std::string file_in_str)
+void BoundaryUnit::read_boundary(std::string file_in_str)
 {
 
     // read file with natural BC data
@@ -440,18 +428,30 @@ void BoundaryTri3::read_boundary(std::string file_in_str)
         // initialize for iteration
         int value_num = 0;  // counts position of value
         std::string value_str;  // stores values in lines
+        VectorInt plid_vec_sub;  // vector of global point IDs
 
         // iterate through each value
         while (std::getline(line_stream, value_str, ','))
         {
 
             // store values in appropriate vector
-            switch (value_num)
+            if (value_num == 0)
             {
-                case 0: boundary_egid_vec.push_back(std::stoi(value_str)); break;
-                case 1: boundary_pa_plid_vec.push_back(std::stoi(value_str)); break;
-                case 2: boundary_pb_plid_vec.push_back(std::stoi(value_str)); break;
-                case 3: boundary_bcid_vec.push_back(std::stoi(value_str)); break;
+                boundary_bcid_vec.push_back(std::stoi(value_str));
+            }
+            else if (value_num == 1)
+            {
+                boundary_egid_vec.push_back(std::stoi(value_str));
+            }
+            else if (value_num < num_neighbor + 2)
+            {
+                plid_vec_sub.push_back(std::stoi(value_str));
+            }
+
+            // store vector of global point IDs
+            if (value_num == num_neighbor + 1)
+            {
+                boundary_blid_to_plid_vec.push_back(plid_vec_sub);
             }
 
             // increment value count
@@ -466,8 +466,7 @@ void BoundaryTri3::read_boundary(std::string file_in_str)
 
     // fill up vectors with preliminary values
     boundary_btid_vec = VectorInt(num_boundary, 0);
-    boundary_pa_parameter_vec = Vector2D(num_boundary, Vector1D{});
-    boundary_pb_parameter_vec = Vector2D(num_boundary, Vector1D{});
+    boundary_blid_to_parameter_vec = VectorDouble3D(num_boundary, VectorDouble2D(num_neighbor, VectorDouble{}));
 
 }
 

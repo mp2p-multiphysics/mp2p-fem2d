@@ -1,5 +1,5 @@
-#ifndef DOMAIN_TRI3
-#define DOMAIN_TRI3
+#ifndef DOMAIN_UNIT
+#define DOMAIN_UNIT
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -8,11 +8,11 @@
 namespace FEM2D
 {
 
-class DomainTri3
+class DomainUnit
 {
     /*
 
-    Domain made of tri3 elements.
+    Domain made of quad4 elements.
 
     Variables
     =========
@@ -32,6 +32,20 @@ class DomainTri3
         global point ID of local point 0
         global point ID of local point 1
         global point ID of local point 2
+        global point ID of local point 3
+    Points 0, 1, 2, and 3 are shown below for a quad4 element in local coordinates.
+
+               (local y)
+                   ^
+                   |
+              1 ---|--- 2
+              |    |    | 
+        <----------+----------> (local x)     
+              |    |    |
+              0 ---|--- 3
+                   |
+                   v
+
     Points 0, 1, and 2 are shown below for a tri3 element in local coordinates.
 
           (local y)
@@ -53,9 +67,10 @@ class DomainTri3
 
     public:
 
-    // file names
-    std::string file_in_point_str;
-    std::string file_in_element_str;
+    // type of element
+    // 0 - tri3; 1 - quad4; 2 - tri6; 3 - quad8
+    int type_element = 0;
+    int num_neighbor = 0;
 
     // point data
     int num_point = 0;
@@ -68,20 +83,32 @@ class DomainTri3
     int num_element = 0;
     VectorInt element_edid_to_egid_vec;
     MapIntInt element_egid_to_edid_map;
-    VectorInt element_p0_pgid_vec;
-    VectorInt element_p1_pgid_vec;
-    VectorInt element_p2_pgid_vec;
+    VectorInt2D element_edid_plid_to_pgid_vec;  // [edid][plid] -> pgid
+
+    // file names
+    std::string file_in_point_str;
+    std::string file_in_element_str;
 
     // default constructor
-    DomainTri3() {}
+    DomainUnit() {}
 
     // constructor
-    DomainTri3(std::string file_in_point_str_in, std::string file_in_element_str_in)
+    DomainUnit(std::string file_in_point_str_in, std::string file_in_element_str_in, int type_element_in)
     {
 
         // store variables
         file_in_point_str = file_in_point_str_in;
         file_in_element_str = file_in_element_str_in;
+        type_element = type_element_in;
+
+        // get number of neighboring points per element
+        switch (type_element)
+        {
+            case 0: num_neighbor = 3; break;  // tri3
+            case 1: num_neighbor = 4; break;  // quad4
+            case 2: num_neighbor = 6; break;  // tri6
+            case 3: num_neighbor = 8; break;  // quad8
+        }
 
         // read csv files
         read_domain_point(file_in_point_str);
@@ -97,7 +124,7 @@ class DomainTri3
 
 };
 
-void DomainTri3::read_domain_point(std::string file_in_point_str)
+void DomainUnit::read_domain_point(std::string file_in_point_str)
 {
 
     // read file with points
@@ -159,7 +186,7 @@ void DomainTri3::read_domain_point(std::string file_in_point_str)
 
 }
 
-void DomainTri3::read_domain_element(std::string file_in_element_str)
+void DomainUnit::read_domain_element(std::string file_in_element_str)
 {
 
     // read file with elements
@@ -189,18 +216,26 @@ void DomainTri3::read_domain_element(std::string file_in_element_str)
         // initialize for iteration
         int value_element_num = 0;  // counts position of value
         std::string value_element_str;  // stores values in lines
+        VectorInt pgid_vec_sub;  // vector of global point IDs
 
         // iterate through each value
         while (std::getline(line_element_stream, value_element_str, ','))
         {
 
             // store values in appropriate vector
-            switch (value_element_num)
+            if (value_element_num == 0)
             {
-                case 0: element_edid_to_egid_vec.push_back(std::stoi(value_element_str)); break;
-                case 1: element_p0_pgid_vec.push_back(std::stod(value_element_str)); break;
-                case 2: element_p1_pgid_vec.push_back(std::stod(value_element_str)); break;
-                case 3: element_p2_pgid_vec.push_back(std::stod(value_element_str)); break;
+                element_edid_to_egid_vec.push_back(std::stoi(value_element_str));
+            }
+            else if (value_element_num < num_neighbor + 1)
+            {
+                pgid_vec_sub.push_back(std::stoi(value_element_str));
+            }
+
+            // store vector of global point IDs
+            if (value_element_num == num_neighbor)
+            {
+                element_edid_plid_to_pgid_vec.push_back(pgid_vec_sub);
             }
 
             // increment value count

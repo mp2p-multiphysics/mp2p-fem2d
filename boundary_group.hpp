@@ -1,8 +1,7 @@
 #ifndef BOUNDARY_GROUP
 #define BOUNDARY_GROUP
 #include <vector>
-#include "boundary_quad4.hpp"
-#include "boundary_tri3.hpp"
+#include "boundary_unit.hpp"
 
 namespace FEM2D
 {
@@ -32,8 +31,7 @@ class BoundaryGroup
     public:
 
     // vector with boundaries in group
-    std::vector<BoundaryTri3*> boundary_t3_ptr_vec;
-    std::vector<BoundaryQuad4*> boundary_q4_ptr_vec;
+    std::vector<BoundaryUnit*> boundary_ptr_vec;
 
     // functions
     void set_boundary_type(VectorInt boundarytype_essential_vec, VectorInt boundarytype_natural_vec);
@@ -43,10 +41,9 @@ class BoundaryGroup
     BoundaryGroup() {}
 
     // constructor
-    BoundaryGroup(std::vector<BoundaryTri3*> boundary_t3_ptr_vec_in, std::vector<BoundaryQuad4*> boundary_q4_ptr_vec_in)
+    BoundaryGroup(std::vector<BoundaryUnit*> boundary_ptr_vec_in)
     {
-        boundary_t3_ptr_vec = boundary_t3_ptr_vec_in;
-        boundary_q4_ptr_vec = boundary_q4_ptr_vec_in;
+        boundary_ptr_vec = boundary_ptr_vec_in;
     }
 
 };
@@ -72,11 +69,7 @@ void BoundaryGroup::set_boundary_type(VectorInt boundarytype_essential_vec, Vect
     */
 
     // iterate through each boundary
-    for (auto boundary_ptr : boundary_t3_ptr_vec)
-    {
-        boundary_ptr->set_boundary_type(boundarytype_essential_vec, boundarytype_natural_vec);
-    }
-    for (auto boundary_ptr : boundary_q4_ptr_vec)
+    for (auto boundary_ptr : boundary_ptr_vec)
     {
         boundary_ptr->set_boundary_type(boundarytype_essential_vec, boundarytype_natural_vec);
     }
@@ -100,11 +93,7 @@ void BoundaryGroup::update_parameter()
     */
 
     // iterate through each boundary
-    for (auto boundary_ptr : boundary_t3_ptr_vec)
-    {
-        boundary_ptr->update_parameter();
-    }
-    for (auto boundary_ptr : boundary_q4_ptr_vec)
+    for (auto boundary_ptr : boundary_ptr_vec)
     {
         boundary_ptr->update_parameter();
     }
