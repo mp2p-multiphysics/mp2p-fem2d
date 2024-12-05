@@ -16,12 +16,12 @@ class BoundaryUnit
 {
     /*
 
-    Boundary conditions (BC) applied on a domain.
+    Boundary conditions (BC) applied on a variable.
 
     Variables
     =========
-    domain_in : DomainUnit
-        Domain where boundary conditions are applied.
+    variable_in : VariableUnit
+        Variable where boundary conditions are applied.
     file_in_str_in : string
         Path to CSV file with data for BCs.
 

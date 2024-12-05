@@ -17,8 +17,6 @@ class BoundaryIntegralUnit
 
     Variables
     =========
-    variable_in : VariableUnit
-        Variable where boundary integrals are calculated.
     boundary_in : BoundaryUnit
         Boundaries where boundary integrals are calculated.
 

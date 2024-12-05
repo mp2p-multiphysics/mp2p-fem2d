@@ -26,10 +26,8 @@ class PhysicsSteadyDiffusion : public PhysicsSteadyBase
     =========
     domain_group_in : DomainGroup
         Domains where this physics is applied to.
-    boundary_group_in : BoundaryGroup
-        Boundaries where this physics is applied to.
-    integral_group_in : IntegralGroup
-        Test function integrals that this physics uses.
+    domainintegral_group_in : DomainIntegralGroup
+        Test function integrals over the domains.
     value_group_in : VariableGroup
         u in 0 = -div(-b * grad(u)) + c.
         This will be solved for by the matrix equation.
@@ -37,6 +35,10 @@ class PhysicsSteadyDiffusion : public PhysicsSteadyBase
         b in 0 = -div(-b * grad(u)) + c.
     generationcoefficient_group_in : ScalarGroup
         c in 0 = -div(-b * grad(u)) + c.
+    boundary_group_in : BoundaryGroup
+        Boundary conditions applied on u.
+    boundaryintegral_group_in : BoundaryIntegralGroup
+        Test function integrals over the boundaries.
 
     Functions
     =========

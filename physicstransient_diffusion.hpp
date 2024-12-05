@@ -26,10 +26,8 @@ class PhysicsTransientDiffusion : public PhysicsTransientBase
     =========
     domain_group_in : DomainGroup
         Domains where this physics is applied to.
-    boundary_group_in : BoundaryGroup
-        Boundaries where this physics is applied to.
-    integral_group_in : IntegralGroup
-        Test function integrals that this physics uses.
+    domainintegral_group_in : DomainIntegralGroup
+        Test function integrals over the domains.
     value_group_in : VariableGroup
         u in a * du/dt = -div(-b * grad(u)) + c.
         This will be solved for by the matrix equation.
@@ -39,6 +37,10 @@ class PhysicsTransientDiffusion : public PhysicsTransientBase
         b in a * du/dt = -div(-b * grad(u)) + c.
     generationcoefficient_group_in : ScalarGroup
         c in a * du/dt = -div(-b * grad(u)) + c.
+    boundary_group_in : BoundaryGroup
+        Boundary conditions applied on u.
+    boundaryintegral_group_in : BoundaryIntegralGroup
+        Test function integrals over the boundaries.
 
     Functions
     =========
