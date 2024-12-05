@@ -53,8 +53,11 @@ class BoundaryUnit
     // blid - boundary local ID - local point along boundary
     // vectors use did as input
 
-    // mesh where variable is applied
+    // domain where boundary is applied
     DomainUnit* domain_ptr;
+
+    // variable where boundary is applied
+    VariableUnit* variable_ptr;
 
     // type of element
     // 0 - tri3; 1 - quad4; 2 - tri6; 3 - quad8
@@ -106,12 +109,15 @@ class BoundaryUnit
     BoundaryUnit() {}
 
     // constructor
-    BoundaryUnit(DomainUnit &domain_in, std::string file_in_str_in)
+    BoundaryUnit(VariableUnit &variable_in, std::string file_in_str_in)
     {
 
         // store variables
-        domain_ptr = &domain_in;
+        variable_ptr = &variable_in;
         file_in_str = file_in_str_in;
+
+        // get domain
+        domain_ptr = variable_ptr->domain_ptr;
 
         // get number of neighboring points per boundary
         switch (domain_ptr->type_element)

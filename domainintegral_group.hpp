@@ -1,12 +1,12 @@
-#ifndef INTEGRAL_GROUP
-#define INTEGRAL_GROUP
+#ifndef DOMAININTEGRAL_GROUP
+#define DOMAININTEGRAL_GROUP
 #include <vector>
-#include "integral_unit.hpp"
+#include "domainintegral_unit.hpp"
 
 namespace FEM2D
 {
 
-class IntegralGroup
+class DomainIntegralGroup
 {
     /*
 
@@ -14,8 +14,8 @@ class IntegralGroup
 
     Variables
     =========
-    integral_ptr_vec_in : vector<IntegralUnit*>
-        vector with pointers to IntegralUnit objects.
+    integral_ptr_vec_in : vector<DomainIntegralUnit*>
+        vector with pointers to DomainIntegralUnit objects.
 
     Functions
     =========
@@ -37,17 +37,13 @@ class IntegralGroup
         Calculates the integral of Ni * Nj * d(Nk)/dx.
     evaluate_integral_Ni_Nj_derivative_Nk_y : void
         Calculates the integral of Ni * Nj * d(Nk)/dy.
-    evaluate_integral_boundary_Ni : void
-        Calculates the integral of Ni at the boundary.
-    evaluate_integral_boundary_Ni_Nj : void
-        Calculates the integral of Ni * Nj at the boundary.
 
     */
 
     public:
 
     // variables
-    std::vector<IntegralUnit*> integral_ptr_vec;
+    std::vector<DomainIntegralUnit*> integral_ptr_vec;
 
     // functions for computing domain integrals
     void evaluate_integral_Ni();
@@ -60,22 +56,18 @@ class IntegralGroup
     void evaluate_integral_Ni_Nj_derivative_Nk_x();
     void evaluate_integral_Ni_Nj_derivative_Nk_y();
 
-    // functions for computing boundary integrals
-    void evaluate_integral_boundary_Ni();
-    void evaluate_integral_boundary_Ni_Nj();
-
     // default constructor
-    IntegralGroup() {}
+    DomainIntegralGroup() {}
 
     // constructor
-    IntegralGroup(std::vector<IntegralUnit*> integral_ptr_vec_in)
+    DomainIntegralGroup(std::vector<DomainIntegralUnit*> integral_ptr_vec_in)
     {
         integral_ptr_vec = integral_ptr_vec_in;
     }
 
 };
 
-void IntegralGroup::evaluate_integral_Ni()
+void DomainIntegralGroup::evaluate_integral_Ni()
 {
     /*
 
@@ -99,7 +91,7 @@ void IntegralGroup::evaluate_integral_Ni()
 
 }
 
-void IntegralGroup::evaluate_integral_derivative_Ni_x()
+void DomainIntegralGroup::evaluate_integral_derivative_Ni_x()
 {
     /*
 
@@ -123,7 +115,7 @@ void IntegralGroup::evaluate_integral_derivative_Ni_x()
 
 }
 
-void IntegralGroup::evaluate_integral_derivative_Ni_y()
+void DomainIntegralGroup::evaluate_integral_derivative_Ni_y()
 {
     /*
 
@@ -147,7 +139,7 @@ void IntegralGroup::evaluate_integral_derivative_Ni_y()
 
 }
 
-void IntegralGroup::evaluate_integral_Ni_Nj()
+void DomainIntegralGroup::evaluate_integral_Ni_Nj()
 {
     /*
 
@@ -171,7 +163,7 @@ void IntegralGroup::evaluate_integral_Ni_Nj()
 
 }
 
-void IntegralGroup::evaluate_integral_Ni_derivative_Nj_x()
+void DomainIntegralGroup::evaluate_integral_Ni_derivative_Nj_x()
 {
     /*
 
@@ -195,7 +187,7 @@ void IntegralGroup::evaluate_integral_Ni_derivative_Nj_x()
 
 }
 
-void IntegralGroup::evaluate_integral_Ni_derivative_Nj_y()
+void DomainIntegralGroup::evaluate_integral_Ni_derivative_Nj_y()
 {
     /*
 
@@ -219,7 +211,7 @@ void IntegralGroup::evaluate_integral_Ni_derivative_Nj_y()
 
 }
 
-void IntegralGroup::evaluate_integral_div_Ni_dot_div_Nj()
+void DomainIntegralGroup::evaluate_integral_div_Ni_dot_div_Nj()
 {
     /*
 
@@ -243,7 +235,7 @@ void IntegralGroup::evaluate_integral_div_Ni_dot_div_Nj()
 
 }
 
-void IntegralGroup::evaluate_integral_Ni_Nj_derivative_Nk_x()
+void DomainIntegralGroup::evaluate_integral_Ni_Nj_derivative_Nk_x()
 {
     /*
 
@@ -267,7 +259,7 @@ void IntegralGroup::evaluate_integral_Ni_Nj_derivative_Nk_x()
 
 }
 
-void IntegralGroup::evaluate_integral_Ni_Nj_derivative_Nk_y()
+void DomainIntegralGroup::evaluate_integral_Ni_Nj_derivative_Nk_y()
 {
     /*
 
@@ -287,54 +279,6 @@ void IntegralGroup::evaluate_integral_Ni_Nj_derivative_Nk_y()
     for (auto integral_ptr : integral_ptr_vec)
     {
         integral_ptr->evaluate_integral_Ni_Nj_derivative_Nk_y();
-    }
-
-}
-
-void IntegralGroup::evaluate_integral_boundary_Ni()
-{
-    /*
-
-    Calculates the integral of Ni at the boundary.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
-
-    // evaluate integrals in each domain
-    for (auto integral_ptr : integral_ptr_vec)
-    {
-        integral_ptr->evaluate_integral_boundary_Ni();
-    }
-
-}
-
-void IntegralGroup::evaluate_integral_boundary_Ni_Nj()
-{
-    /*
-
-    Calculates the integral of Ni * Nj at the boundary.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
-
-    // evaluate integrals in each domain
-    for (auto integral_ptr : integral_ptr_vec)
-    {
-        integral_ptr->evaluate_integral_boundary_Ni_Nj();
     }
 
 }

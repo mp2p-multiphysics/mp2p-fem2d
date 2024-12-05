@@ -3,10 +3,11 @@
 #include <vector>
 #include "Eigen/Eigen"
 #include "boundary_group.hpp"
+#include "boundaryintegral_group.hpp"
 #include "container_typedef.hpp"
 #include "domain_group.hpp"
+#include "domainintegral_group.hpp"
 #include "scalar_group.hpp"
-#include "integral_group.hpp"
 #include "variable_group.hpp"
 
 namespace FEM2D
@@ -37,14 +38,10 @@ class PhysicsSteadyBase
 
     public:
 
-    // variables
-    DomainGroup *domain_group_ptr;
-    BoundaryGroup *boundary_group_ptr;
-    IntegralGroup *integral_group_ptr;
-
-    // vector of scalar and variable groups
+    // vector of boundary, scalar, and variable groups
     std::vector<ScalarGroup*> scalar_group_ptr_vec;
     std::vector<VariableGroup*> variable_group_ptr_vec;
+    std::vector<BoundaryGroup*> boundary_group_ptr_vec;
 
     // starting row of test functions in matrix equation
     int start_row = -1;
@@ -53,9 +50,9 @@ class PhysicsSteadyBase
     virtual void matrix_fill(Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec);
     virtual void set_start_row(int start_row_in);
     virtual int get_start_row();
-    virtual BoundaryGroup* get_boundary_group_ptr();
     virtual std::vector<ScalarGroup*> get_scalar_group_ptr_vec();
     virtual std::vector<VariableGroup*> get_variable_group_ptr_vec();
+    virtual std::vector<BoundaryGroup*> get_boundary_group_ptr_vec();
 
     // default constructor
     PhysicsSteadyBase() {}
@@ -127,7 +124,7 @@ int PhysicsSteadyBase::get_start_row()
 
 }
 
-BoundaryGroup* PhysicsSteadyBase::get_boundary_group_ptr()
+std::vector<BoundaryGroup*> PhysicsSteadyBase::get_boundary_group_ptr_vec()
 {
     /*
 
@@ -144,7 +141,7 @@ BoundaryGroup* PhysicsSteadyBase::get_boundary_group_ptr()
 
     */
     
-    return boundary_group_ptr;
+    return boundary_group_ptr_vec;
 
 }
 

@@ -3,9 +3,10 @@
 #include <vector>
 #include "Eigen/Eigen"
 #include "boundary_group.hpp"
+#include "boundaryintegral_group.hpp"
 #include "container_typedef.hpp"
-#include "integral_group.hpp"
 #include "domain_group.hpp"
+#include "domainintegral_group.hpp"
 #include "physicstransient_base.hpp"
 #include "scalar_group.hpp"
 #include "variable_group.hpp"
@@ -64,18 +65,20 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
 
     // variables
     DomainGroup *domain_group_ptr;
-    BoundaryGroup *boundary_group_ptr;
-    IntegralGroup *integral_group_ptr;
+    DomainIntegralGroup *domainintegral_group_ptr;
     VariableGroup *value_group_ptr;
     ScalarGroup *derivativecoefficient_group_ptr;
     ScalarGroup *diffusioncoefficient_group_ptr;
     ScalarGroup *velocity_x_group_ptr;
     ScalarGroup *velocity_y_group_ptr;
     ScalarGroup *generationcoefficient_group_ptr;
+    BoundaryGroup *boundary_group_ptr;
+    BoundaryIntegralGroup *boundaryintegral_group_ptr;
 
     // vector of scalar and variable groups
     std::vector<ScalarGroup*> scalar_group_ptr_vec;
     std::vector<VariableGroup*> variable_group_ptr_vec;
+    std::vector<BoundaryGroup*> boundary_group_ptr_vec;
 
     // starting row of test functions in matrix equation
     int start_row = -1;
@@ -87,9 +90,9 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
     );
     void set_start_row(int start_row_in);
     int get_start_row();
-    BoundaryGroup* get_boundary_group_ptr();
     std::vector<ScalarGroup*> get_scalar_group_ptr_vec();
     std::vector<VariableGroup*> get_variable_group_ptr_vec();
+    std::vector<BoundaryGroup*> get_boundary_group_ptr_vec();
 
     // default constructor
     PhysicsTransientConvectionDiffusion() {}
@@ -97,22 +100,24 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
     // constructor
     PhysicsTransientConvectionDiffusion
     (
-        DomainGroup &domain_group_in, BoundaryGroup &boundary_group_in, IntegralGroup &integral_group_in,
+        DomainGroup &domain_group_in, DomainIntegralGroup &domainintegral_group_in,
         VariableGroup &value_group_in,
-        ScalarGroup &derivativecoefficient_group_in, ScalarGroup &diffusioncoefficient_group_in, ScalarGroup &velocity_x_group_in, ScalarGroup &velocity_y_group_in, ScalarGroup &generationcoefficient_group_in
+        ScalarGroup &derivativecoefficient_group_in, ScalarGroup &diffusioncoefficient_group_in, ScalarGroup &velocity_x_group_in, ScalarGroup &velocity_y_group_in, ScalarGroup &generationcoefficient_group_in,
+        BoundaryGroup &boundary_group_in, BoundaryIntegralGroup &boundaryintegral_group_in
     )
     {
         
         // store variables
         domain_group_ptr = &domain_group_in;
-        boundary_group_ptr = &boundary_group_in;
-        integral_group_ptr = &integral_group_in;
+        domainintegral_group_ptr = &domainintegral_group_in;
         value_group_ptr = &value_group_in;
         derivativecoefficient_group_ptr = &derivativecoefficient_group_in;
         diffusioncoefficient_group_ptr = &diffusioncoefficient_group_in;
         velocity_x_group_ptr = &velocity_x_group_in;
         velocity_y_group_ptr = &velocity_y_group_in;
         generationcoefficient_group_ptr = &generationcoefficient_group_in;
+        boundary_group_ptr = &boundary_group_in;
+        boundaryintegral_group_ptr = &boundaryintegral_group_in;
 
         // set boundary conditions
         boundary_group_ptr->set_boundary_type({0}, {1, 2});
@@ -122,13 +127,13 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
         variable_group_ptr_vec = {value_group_ptr};
 
         // calculate integrals
-        integral_group_ptr->evaluate_integral_div_Ni_dot_div_Nj();
-        integral_group_ptr->evaluate_integral_Ni_derivative_Nj_x();
-        integral_group_ptr->evaluate_integral_Ni_derivative_Nj_y();
-        integral_group_ptr->evaluate_integral_Ni_Nj();
-        integral_group_ptr->evaluate_integral_Ni();
-        integral_group_ptr->evaluate_integral_boundary_Ni();
-        integral_group_ptr->evaluate_integral_boundary_Ni_Nj();
+        domainintegral_group_ptr->evaluate_integral_div_Ni_dot_div_Nj();
+        domainintegral_group_ptr->evaluate_integral_Ni_derivative_Nj_x();
+        domainintegral_group_ptr->evaluate_integral_Ni_derivative_Nj_y();
+        domainintegral_group_ptr->evaluate_integral_Ni_Nj();
+        domainintegral_group_ptr->evaluate_integral_Ni();
+        boundaryintegral_group_ptr->evaluate_integral_Ni();
+        boundaryintegral_group_ptr->evaluate_integral_Ni_Nj();
 
     }
 
@@ -137,28 +142,31 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
         Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
-        DomainUnit *domain_ptr, IntegralUnit *integral_ptr,
+        DomainUnit *domain_ptr, DomainIntegralUnit *domainintegral_ptr,
         ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr
     );
     void matrix_fill_natural
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
         Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
-        DomainUnit *domain_ptr, BoundaryUnit *boundary_ptr,  IntegralUnit *integral_ptr,
-        ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr
+        DomainUnit *domain_ptr,
+        ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr,
+        BoundaryUnit *boundary_ptr, BoundaryIntegralUnit *boundaryintegral_ptr
     );
     void matrix_fill_essential_clear
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
         Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
-        DomainUnit *domain_ptr, BoundaryUnit *boundary_ptr
+        DomainUnit *domain_ptr,
+        BoundaryUnit *boundary_ptr
     );
     void matrix_fill_essential
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
         Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
-        DomainUnit *domain_ptr, BoundaryUnit *boundary_ptr,  IntegralUnit *integral_ptr,
-        ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr
+        DomainUnit *domain_ptr,
+        ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr,
+        BoundaryUnit *boundary_ptr, BoundaryIntegralUnit *boundaryintegral_ptr
     );
 
 };
@@ -200,7 +208,7 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
 
         // subset the domain and integrals
         DomainUnit *domain_ptr = domain_group_ptr->domain_ptr_vec[indx_d];
-        IntegralUnit *integral_ptr = integral_group_ptr->integral_ptr_vec[indx_d];
+        DomainIntegralUnit *domainintegral_ptr = domainintegral_group_ptr->integral_ptr_vec[indx_d];
 
         // subset the scalars
         ScalarUnit *derivativecoefficient_ptr = derivativecoefficient_group_ptr->scalar_ptr_vec[indx_d];
@@ -211,9 +219,8 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
 
         // fill up matrix with domain equations
         matrix_fill_domain(
-            a_mat, c_mat, d_vec,
-            x_vec, x_last_timestep_vec, dt,
-            domain_ptr, integral_ptr,
+            a_mat, c_mat, d_vec, x_vec, x_last_timestep_vec, dt,
+            domain_ptr, domainintegral_ptr,
             derivativecoefficient_ptr, diffusioncoefficient_ptr, velocity_x_ptr, velocity_y_ptr, generationcoefficient_ptr
         );
 
@@ -223,10 +230,10 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
     for (int indx_d = 0; indx_d < domain_group_ptr->domain_ptr_vec.size(); indx_d++)
     {
 
-        // subset the domain and integrals
+        // subset the boundary and integrals
         DomainUnit *domain_ptr = domain_group_ptr->domain_ptr_vec[indx_d];
         BoundaryUnit *boundary_ptr = boundary_group_ptr->boundary_ptr_vec[indx_d];
-        IntegralUnit *integral_ptr = integral_group_ptr->integral_ptr_vec[indx_d];
+        BoundaryIntegralUnit *boundaryintegral_ptr = boundaryintegral_group_ptr->integral_ptr_vec[indx_d];
 
         // subset the scalars
         ScalarUnit *derivativecoefficient_ptr = derivativecoefficient_group_ptr->scalar_ptr_vec[indx_d];
@@ -237,10 +244,10 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
 
         // fill up matrix with boundary conditions
         matrix_fill_natural(
-            a_mat, c_mat, d_vec,
-            x_vec, x_last_timestep_vec, dt,
-            domain_ptr, boundary_ptr, integral_ptr,
-            derivativecoefficient_ptr, diffusioncoefficient_ptr, velocity_x_ptr, velocity_y_ptr, generationcoefficient_ptr
+            a_mat, c_mat, d_vec, x_vec, x_last_timestep_vec, dt,
+            domain_ptr,
+            derivativecoefficient_ptr, diffusioncoefficient_ptr, velocity_x_ptr, velocity_y_ptr, generationcoefficient_ptr,
+            boundary_ptr, boundaryintegral_ptr
         );
 
     }
@@ -249,15 +256,15 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
     for (int indx_d = 0; indx_d < domain_group_ptr->domain_ptr_vec.size(); indx_d++)
     {
 
-        // subset the domain and integrals
+        // subset the boundary
         DomainUnit *domain_ptr = domain_group_ptr->domain_ptr_vec[indx_d];
         BoundaryUnit *boundary_ptr = boundary_group_ptr->boundary_ptr_vec[indx_d];
 
         // fill up matrix with boundary conditions
         matrix_fill_essential_clear(
-            a_mat, c_mat, d_vec,
-            x_vec, x_last_timestep_vec, dt,
-            domain_ptr, boundary_ptr
+            a_mat, c_mat, d_vec, x_vec, x_last_timestep_vec, dt,
+            domain_ptr,
+            boundary_ptr
         );
 
     }
@@ -266,10 +273,10 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
     for (int indx_d = 0; indx_d < domain_group_ptr->domain_ptr_vec.size(); indx_d++)
     {
 
-        // subset the domain and integrals
+        // subset the boundary
         DomainUnit *domain_ptr = domain_group_ptr->domain_ptr_vec[indx_d];
         BoundaryUnit *boundary_ptr = boundary_group_ptr->boundary_ptr_vec[indx_d];
-        IntegralUnit *integral_ptr = integral_group_ptr->integral_ptr_vec[indx_d];
+        BoundaryIntegralUnit *boundaryintegral_ptr = boundaryintegral_group_ptr->integral_ptr_vec[indx_d];
 
         // subset the scalars
         ScalarUnit *derivativecoefficient_ptr = derivativecoefficient_group_ptr->scalar_ptr_vec[indx_d];
@@ -280,10 +287,10 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
 
         // fill up matrix with boundary conditions
         matrix_fill_essential(
-            a_mat, c_mat, d_vec,
-            x_vec, x_last_timestep_vec, dt,
-            domain_ptr, boundary_ptr, integral_ptr,
-            derivativecoefficient_ptr, diffusioncoefficient_ptr, velocity_x_ptr, velocity_y_ptr, generationcoefficient_ptr
+            a_mat, c_mat, d_vec, x_vec, x_last_timestep_vec, dt,
+            domain_ptr,
+            derivativecoefficient_ptr, diffusioncoefficient_ptr, velocity_x_ptr, velocity_y_ptr, generationcoefficient_ptr,
+            boundary_ptr, boundaryintegral_ptr
         );
 
     }
@@ -294,7 +301,7 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_domain
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
     Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
-    DomainUnit *domain_ptr, IntegralUnit *integral_ptr,
+    DomainUnit *domain_ptr, DomainIntegralUnit *domainintegral_ptr,
     ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr
 )
 {
@@ -323,19 +330,19 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_domain
             int mat_row = start_row + pfid_vec[indx_i];
             int mat_col = value_group_ptr->start_col + pfid_vec[indx_j];
             a_mat.coeffRef(mat_row, mat_col) += (
-                (dervcoeff_vec[indx_i]/dt) * integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j] +
-                diffcoeff_vec[indx_i] * integral_ptr->integral_div_Ni_dot_div_Nj_vec[edid][indx_i][indx_j] +
-                velx_vec[indx_i] * integral_ptr->integral_Ni_derivative_Nj_x_vec[edid][indx_i][indx_j] +
-                vely_vec[indx_i] * integral_ptr->integral_Ni_derivative_Nj_y_vec[edid][indx_i][indx_j]
+                (dervcoeff_vec[indx_i]/dt) * domainintegral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j] +
+                diffcoeff_vec[indx_i] * domainintegral_ptr->integral_div_Ni_dot_div_Nj_vec[edid][indx_i][indx_j] +
+                velx_vec[indx_i] * domainintegral_ptr->integral_Ni_derivative_Nj_x_vec[edid][indx_i][indx_j] +
+                vely_vec[indx_i] * domainintegral_ptr->integral_Ni_derivative_Nj_y_vec[edid][indx_i][indx_j]
             );
-            c_mat.coeffRef(mat_row, mat_col) += (dervcoeff_vec[indx_i]/dt) * integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j];
+            c_mat.coeffRef(mat_row, mat_col) += (dervcoeff_vec[indx_i]/dt) * domainintegral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j];
         }}
 
         // calculate d_vec coefficients
         for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
             int mat_row = start_row + pfid_vec[indx_i];
-            d_vec.coeffRef(mat_row) += gencoeff_vec[indx_i] * integral_ptr->integral_Ni_vec[edid][indx_i];
+            d_vec.coeffRef(mat_row) += gencoeff_vec[indx_i] * domainintegral_ptr->integral_Ni_vec[edid][indx_i];
         }
 
     }
@@ -346,8 +353,9 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_natural
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
     Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
-    DomainUnit *domain_ptr, BoundaryUnit *boundary_ptr,  IntegralUnit *integral_ptr,
-    ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr
+    DomainUnit *domain_ptr,
+    ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr,
+    BoundaryUnit *boundary_ptr, BoundaryIntegralUnit *boundaryintegral_ptr
 )
 {
 
@@ -365,7 +373,7 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_natural
         VectorDouble2D parameter_mat = boundary_ptr->natural_blid_to_parameter_vec[bnid];
         
         // calculate boundary key
-        int boundary_key = integral_ptr->get_boundary_key(plid_vec);
+        int boundary_key = boundaryintegral_ptr->get_boundary_key(plid_vec);
 
         // get group ID of points
         // used for getting matrix rows and columns
@@ -384,14 +392,14 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_natural
             switch (btid)
             {
                 case 1:  // neumann
-                    d_vec.coeffRef(mat_row) += parameter_vec[0] * integral_ptr->integral_boundary_Ni_vec[edid][boundary_key][indx_i];
+                    d_vec.coeffRef(mat_row) += parameter_vec[0] * boundaryintegral_ptr->integral_Ni_vec[edid][boundary_key][indx_i];
                 break;
                 case 2:  // robin
-                    d_vec.coeffRef(mat_row) += parameter_vec[0] * integral_ptr->integral_boundary_Ni_vec[edid][boundary_key][indx_i];
+                    d_vec.coeffRef(mat_row) += parameter_vec[0] * boundaryintegral_ptr->integral_Ni_vec[edid][boundary_key][indx_i];
                     for (int indx_j = 0; indx_j < domain_ptr->num_neighbor; indx_j++)
                     {
                         int mat_col = value_group_ptr->start_col + pfid_vec[indx_i];
-                        a_mat.coeffRef(mat_row, mat_col) += -parameter_vec[1] * integral_ptr->integral_boundary_Ni_Nj_vec[edid][boundary_key][indx_i][indx_j];
+                        a_mat.coeffRef(mat_row, mat_col) += -parameter_vec[1] * boundaryintegral_ptr->integral_Ni_Nj_vec[edid][boundary_key][indx_i][indx_j];
                     }
                 break;
             }
@@ -406,7 +414,8 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_essential_clear
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
     Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
-    DomainUnit *domain_ptr, BoundaryUnit *boundary_ptr
+    DomainUnit *domain_ptr,
+    BoundaryUnit *boundary_ptr
 )
 {
 
@@ -448,8 +457,9 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_essential
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
     Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
-    DomainUnit *domain_ptr, BoundaryUnit *boundary_ptr,  IntegralUnit *integral_ptr,
-    ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr
+    DomainUnit *domain_ptr,
+    ScalarUnit *derivativecoefficient_ptr, ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *velocity_x_ptr, ScalarUnit *velocity_y_ptr, ScalarUnit *generationcoefficient_ptr,
+    BoundaryUnit *boundary_ptr, BoundaryIntegralUnit *boundaryintegral_ptr
 )
 {
 
@@ -467,7 +477,7 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_essential
         VectorDouble2D parameter_mat = boundary_ptr->essential_blid_to_parameter_vec[beid];
         
         // calculate boundary key
-        int boundary_key = integral_ptr->get_boundary_key(plid_vec);
+        int boundary_key = boundaryintegral_ptr->get_boundary_key(plid_vec);
 
         // get group ID of points
         // used for getting matrix rows and columns
@@ -540,7 +550,7 @@ int PhysicsTransientConvectionDiffusion::get_start_row()
 
 }
 
-BoundaryGroup* PhysicsTransientConvectionDiffusion::get_boundary_group_ptr()
+std::vector<BoundaryGroup*> PhysicsTransientConvectionDiffusion::get_boundary_group_ptr_vec()
 {
     /*
 
@@ -557,7 +567,7 @@ BoundaryGroup* PhysicsTransientConvectionDiffusion::get_boundary_group_ptr()
 
     */
     
-    return boundary_group_ptr;
+    return boundary_group_ptr_vec;
 
 }
 

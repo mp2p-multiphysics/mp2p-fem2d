@@ -42,9 +42,9 @@ class MatrixEquationTransient
 
     // vector of physics
     std::vector<PhysicsTransientBase*> physics_ptr_vec;
-    std::vector<BoundaryGroup*> boundary_group_ptr_vec;
     std::vector<ScalarGroup*> scalar_group_ptr_vec;
     std::vector<VariableGroup*> variable_group_ptr_vec;
+    std::vector<BoundaryGroup*> boundary_group_ptr_vec;
 
     // matrix equation variables
     Eigen::SparseMatrix<double> a_mat;
@@ -120,15 +120,6 @@ class MatrixEquationTransient
         // get number of linear equations (total number of domain points)
         num_equation = assign_start_col;
 
-        // get vector of boundary groups
-        // iterate through each physics and store boundary groups
-        std::set<BoundaryGroup*> boundary_group_ptr_set;
-        for (auto physics_ptr : physics_ptr_vec)
-        {
-            boundary_group_ptr_set.insert(physics_ptr->get_boundary_group_ptr());
-        }
-        boundary_group_ptr_vec = std::vector<BoundaryGroup*>(boundary_group_ptr_set.begin(), boundary_group_ptr_set.end());
-
         // get vector of scalar groups
         // iterate through each physics and store scalar groups
         std::set<ScalarGroup*> scalar_group_ptr_set;
@@ -147,6 +138,15 @@ class MatrixEquationTransient
         }}
         variable_group_ptr_vec = std::vector<VariableGroup*>(variable_group_ptr_set.begin(), variable_group_ptr_set.end());
 
+        // get vector of boundary groups
+        // iterate through each physics and store boundary groups
+        std::set<BoundaryGroup*> boundary_group_ptr_set;
+        for (auto physics_ptr : physics_ptr_vec) {
+        for (auto boundary_group_ptr : physics_ptr->get_boundary_group_ptr_vec()) {
+            boundary_group_ptr_set.insert(boundary_group_ptr);
+        }}
+        boundary_group_ptr_vec = std::vector<BoundaryGroup*>(boundary_group_ptr_set.begin(), boundary_group_ptr_set.end());
+        
         // initialize matrix equation variables
         a_mat = Eigen::SparseMatrix<double> (num_equation, num_equation);
         c_mat = Eigen::SparseMatrix<double> (num_equation, num_equation);
