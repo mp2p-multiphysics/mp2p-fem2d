@@ -142,7 +142,6 @@ class PhysicsTransientDiffusion : public PhysicsTransientBase
 
 };
 
-
 void PhysicsTransientDiffusion::set_variablegroup(VariableGroup &value_in)
 {
     
@@ -236,7 +235,7 @@ void PhysicsTransientDiffusion::matrix_fill
     */
 
     // iterate through each domain
-   for (int indx_d = 0; indx_d < domain_ptr_vec.size(); indx_d++)
+    for (int indx_d = 0; indx_d < domain_ptr_vec.size(); indx_d++)
     {
 
         // subset domain objects
@@ -256,7 +255,7 @@ void PhysicsTransientDiffusion::matrix_fill
     }
 
     // iterate through each neumann boundary
-   for (int indx_d = 0; indx_d < neumann_domain_ptr_vec.size(); indx_d++)
+    for (int indx_d = 0; indx_d < neumann_domain_ptr_vec.size(); indx_d++)
     {
 
         // subset domain objects
@@ -273,7 +272,7 @@ void PhysicsTransientDiffusion::matrix_fill
     }
 
     // clear equations with dirichlet boundary conditions
-   for (int indx_d = 0; indx_d < dirichlet_domain_ptr_vec.size(); indx_d++)
+    for (int indx_d = 0; indx_d < dirichlet_domain_ptr_vec.size(); indx_d++)
     {
 
         // subset domain objects
@@ -288,7 +287,7 @@ void PhysicsTransientDiffusion::matrix_fill
     }
 
     // iterate through each dirichlet boundary
-   for (int indx_d = 0; indx_d < dirichlet_domain_ptr_vec.size(); indx_d++)
+    for (int indx_d = 0; indx_d < dirichlet_domain_ptr_vec.size(); indx_d++)
     {
 
         // subset domain objects
