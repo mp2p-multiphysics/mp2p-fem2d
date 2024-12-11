@@ -24,44 +24,18 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
     
     a * du/dt = -div(-b * grad(u)) - v * grad(u) + c
 
-    Variables
-    =========
-    domain_group_in : DomainGroup
-        Domains where this physics is applied to.
-    domainintegral_group_in : DomainIntegralGroup
-        Test function integrals over the domains.
-    value_group_in : VariableGroup
-        u in a * du/dt = -div(-b * grad(u)) + c.
-        This will be solved for by the matrix equation.
-    derivativecoefficient_group_ptr : ScalarGroup
-        a in a * du/dt = -div(-b * grad(u)) + c.
-    diffusioncoefficient_group_in : ScalarGroup
-        b in a * du/dt = -div(-b * grad(u)) + c.
-    velocity_x_field_in : ScalarFieldGroup
-        x-component of v in a * du/dt = -div(-b * grad(u)) - v * grad(u) + c.
-    velocity_x_field_in : ScalarFieldGroup
-        y-component of v in a * du/dt = -div(-b * grad(u)) - v * grad(u) + c.
-    generationcoefficient_group_in : ScalarGroup
-        c in a * du/dt = -div(-b * grad(u)) + c.
-    boundary_group_in : BoundaryGroup
-        Boundary conditions applied on u.
-    boundaryintegral_group_in : BoundaryIntegralGroup
-        Test function integrals over the boundaries.
-
     Functions
     =========
     matrix_fill : void
         Fill up the matrix equation Ax = b with entries as dictated by the physics. 
-    set_start_row : void
-        Sets the starting row in A and b where entries are filled up.
-    get_start_row : int
-        Returns the starting row.
-    get_boundary_group_ptr_vec : vector<BoundaryGroup*>
-        Returns the vector containing pointers to BoundaryGroup objects tied to this physics.
-    get_scalar_group_ptr_vec : vector<ScalarGroup*>
-        Returns the vector containing pointers to ScalarGroup objects tied to this physics.
-    get_variable_group_ptr_vec : vector<VariableGroup*>
-        Returns the vector containing pointers to VariableGroup objects tied to this physics.
+    set_variablegroup : void
+        Set variables used in this physics.
+    set_domain : void
+        Set scalars applied to 2D domains.
+    set_boundary_dirichlet : void
+        Set a Dirichlet boundary condition along a 1D domain.
+    set_boundary_neumann : void
+        Set a Neumann boundary condition along a 1D domain.
 
     */
 
@@ -150,7 +124,22 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
 
 void PhysicsTransientConvectionDiffusion::set_variablegroup(VariableGroup &value_in)
 {
+    /*
     
+    Set variables used in this physics.
+
+    Arguments
+    =========
+    value_in : VariableGroup
+        u in a * du/dt = -div(-b * grad(u)) - v * grad(u) + c.
+        This will be solved for by the matrix equation.
+
+    Returns
+    =======
+    (none)
+    
+    */
+
     // set variable groups
     value_ptr = &value_in;
 
@@ -161,6 +150,32 @@ void PhysicsTransientConvectionDiffusion::set_variablegroup(VariableGroup &value
 
 void PhysicsTransientConvectionDiffusion::set_domain(Domain2D &domain_in, Integral2D &integral_in, Scalar2D &derivativecoefficient_in, Scalar2D &diffusioncoefficient_in, Scalar2D &velocity_x_in, Scalar2D &velocity_y_in, Scalar2D &generationcoefficient_in)
 {
+    /*
+    
+    Set scalars applied to 2D domains.
+
+    Arguments
+    =========
+    domain_in : Domain2D
+        Domain that this physics applies to.
+    integral_in : Integral2D
+        Test function integrals over the domains.
+    derivativecoefficient_in : Scalar2D
+        a in a * du/dt = -div(-b * grad(u)) - v * grad(u) + c.
+    diffusioncoefficient_in : Scalar2D
+        b in a * du/dt = -div(-b * grad(u)) - v * grad(u) + c.
+    velocity_x_in : Scalar2D
+        x-component of v in a * du/dt = -div(-b * grad(u)) - v * grad(u) + c.
+    velocity_y_in : Scalar2D
+        y-component of v in a * du/dt = -div(-b * grad(u)) - v * grad(u) + c.
+    generationcoefficient_in : Scalar2D
+        c in a * du/dt = -div(-b * grad(u)) - v * grad(u) + c.
+
+    Returns
+    =======
+    (none)
+
+    */
 
     // add to vector of domain objects
     domain_ptr_vec.push_back(&domain_in);
@@ -187,6 +202,22 @@ void PhysicsTransientConvectionDiffusion::set_domain(Domain2D &domain_in, Integr
 
 void PhysicsTransientConvectionDiffusion::set_boundary_dirichlet(Domain1D &domain_in, Scalar1D &value_constant_in)
 {
+    /*
+    
+    Set a Dirichlet boundary condition along a 1D domain.
+
+    Arguments
+    =========
+    domain_in : Domain1D
+        Domain that this boundary condition applies to.
+    value_constant_in : Scalar1D
+        Constant value prescribed by the boundary condition.
+
+    Returns
+    =======
+    (none)
+
+    */
 
     // add to vector of boundary objects
     dirichlet_domain_ptr_vec.push_back(&domain_in);
@@ -199,7 +230,25 @@ void PhysicsTransientConvectionDiffusion::set_boundary_dirichlet(Domain1D &domai
 
 void PhysicsTransientConvectionDiffusion::set_boundary_neumann(Domain1D &domain_in, Integral1D &integral_in, Scalar1D &value_flux_in)
 {
+    /*
+    
+    Set a Neumann boundary condition along a 1D domain.
 
+    Arguments
+    =========
+    domain_in : Domain1D
+        Domain that this boundary condition applies to.
+    integral_in : Integral1D
+        Test function integrals over the domains.
+    value_flux_in : Scalar1D
+        Flux prescribed by the boundary condition.
+
+    Returns
+    =======
+    (none)
+
+    */
+   
     // add to vector of boundary objects
     neumann_domain_ptr_vec.push_back(&domain_in);
     neumann_integral_ptr_vec.push_back(&integral_in);

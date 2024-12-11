@@ -18,18 +18,18 @@ class Scalar2D
 
     Variables (for constant values)
     =========
-    domain_in : DomainQuad4
+    domain_in : Domain2D
         Domain where scalar value is applied.
     value_constant_in : double
         Value of the scalar.
 
     Variables (for non-constant values)
     =========
-    domain_in : DomainQuad4
+    domain_in : Domain2D
         Domain where scalar value is applied.
     value_function_in : function(double, double, VectorDouble) -> double
         Function used to compute scalar values based on variable values.
-    variable_ptr_vec_in : vector<VariableQuad4*>
+    variable_ptr_vec_in : vector<Variable2D*>
         vector of pointers to variable objects needed to compute scalar values.
 
     Functions

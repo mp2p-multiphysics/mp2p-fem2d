@@ -12,7 +12,7 @@ class Domain2D
 {
     /*
 
-    Domain object.
+    Representation of a 2D domain.
 
     Variables
     =========
@@ -90,10 +90,6 @@ class Domain2D
                    v
 
     */
-
-    // pdid - point domain ID
-    // pgid - point global ID
-    // vectors use pdid as input
 
     public:
 

@@ -16,7 +16,7 @@ class Variable2D
 
     Variables
     =========
-    domain_in : DomainQuad4
+    domain_in : Domain2D
         Domain where variable is applied.
     value_initial_in : double
         Initial value of the variable.

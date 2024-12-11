@@ -14,88 +14,27 @@ class Domain1D
 {
     /*
 
-    Domain object.
+    Representation of a 1D domain.
 
     Variables
     =========
-    file_in_point_str_in : string
-        Path to CSV file with data for domain points.
+    domain_in : Domain2D
+        2D domain where this 1D domain can be found.
     file_in_element_str_in : string
         Path to CSV file with data for domain elements.
-    type_element_in : int
-        Denotes type of element.
-        Use 0, 1, 2, or 3 to for tri3, quad4, tri6, or quad8.
 
     Notes
     ====
-    The CSV file with point data must have the following columns:
-        global point ID
-        x-coordinate of point
-        y-coordinate of point
     The CSV file with element data must have the following columns:
         global element ID
         global point ID of local point 0
         global point ID of local point 1
-        global point ID of local point 2
         ...
 
-    Points 0 to 2 are shown below for a tri3 element in local coordinates.
-
-          (local y)
-             ^
-             |
-             2 \
-             |   \
-             |     \
-             |       \
-        <----1---------0------> (local x)
-             |
-             v
-    
-    Points 0 to 3 are shown below for a quad4 element in local coordinates.
-
-               (local y)
-                   ^
-                   |
-              1 ---|--- 2
-              |    |    | 
-        <----------+----------> (local x)     
-              |    |    |
-              0 ---|--- 3
-                   |
-                   v
-
-    Points 0 to 5 are shown below for a tri6 element in local coordinates.
-
-          (local y)
-             ^
-             |
-             4 \
-             |   \ 
-             3     5
-             |       \
-        <----2----1----0------> (local x)
-             |
-             v
-    
-    Points 0 to 7 are shown below for a quad8 element in local coordinates.
-
-               (local y)
-                   ^
-                   |
-              2 ---3--- 4
-              |    |    | 
-        <-----1----+----5-----> (local x)     
-              |    |    |
-              0 ---7--- 6
-                   |
-                   v
+    Point 0 and 1 refer to the left and right points of a line2 element.
+    Point 0, 1, and 2 refer to the left, middle, and right points of a line3 element.
 
     */
-
-    // pdid - point domain ID
-    // pgid - point global ID
-    // vectors use pdid as input
 
     public:
 

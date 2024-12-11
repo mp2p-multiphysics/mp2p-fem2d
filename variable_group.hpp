@@ -162,8 +162,8 @@ VectorInt VariableGroup::get_neighbor_pfid(Domain1D* domain_ptr, int edid)
 
     Arguments
     =========
-    domain_ptr : Domain2D*
-        Pointer to Domain2D object with element.
+    domain_ptr : Domain1D*
+        Pointer to Domain1D object with element.
     edid : int
         Domain ID of the element.
 

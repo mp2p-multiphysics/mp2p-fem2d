@@ -23,10 +23,6 @@ class Integral2D
     =========
     evaluate_integral_Ni : void
         Calculates the integral of Ni.
-    evaluate_integral_derivative_Ni_x : void
-        Calculates the integral of d(Ni)/dx.
-    evaluate_integral_derivative_Ni_y : void
-        Calculates the integral of d(Ni)/dy.
     evaluate_integral_Ni_Nj : void
         Calculates the integral of Ni * Nj.
     evaluate_integral_Ni_derivative_Nj_x : void
@@ -35,10 +31,6 @@ class Integral2D
         Calculates the integral of Ni * d(Nj)/dy.
     evaluate_integral_div_Ni_dot_div_Nj : void
         Calculates the integral of div(Ni) dot div(Nj).
-    evaluate_integral_Ni_Nj_derivative_Nk_x : void
-        Calculates the integral of Ni * Nj * d(Nk)/dx.
-    evaluate_integral_Ni_Nj_derivative_Nk_y : void
-        Calculates the integral of Ni * Nj * d(Nk)/dy.
 
     Notes
     ====
