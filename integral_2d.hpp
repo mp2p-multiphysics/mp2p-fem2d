@@ -1,15 +1,14 @@
-#ifndef DOMAININTEGRAL_UNIT
-#define DOMAININTEGRAL_UNIT
+#ifndef INTEGRAL_2D
+#define INTEGRAL_2D
 #include <vector>
 #include "Eigen/Eigen"
-#include "boundary_unit.hpp"
 #include "container_typedef.hpp"
-#include "domain_unit.hpp"
+#include "domain_2d.hpp"
 
 namespace FEM2D
 {
 
-class DomainIntegralUnit
+class Integral2D
 {
     /*
 
@@ -17,7 +16,7 @@ class DomainIntegralUnit
 
     Variables
     =========
-    domain_in : DomainUnit
+    domain_in : Domain2D
         Domain where element integrals are calculated.
 
     Functions
@@ -52,8 +51,8 @@ class DomainIntegralUnit
 
     public:
     
-    // domain and boundary
-    DomainUnit *domain_ptr;
+    // domain where integral is applied
+    Domain2D *domain_ptr;
 
     // vectors with domain test functions
     // index as follows: [edid][integration_point][i]
@@ -66,31 +65,23 @@ class DomainIntegralUnit
     // vectors with domain integrals
     // index as follows: [edid][i][j][k]
     VectorDouble2D integral_Ni_vec;
-    VectorDouble2D integral_derivative_Ni_x_vec;
-    VectorDouble2D integral_derivative_Ni_y_vec;
     VectorDouble3D integral_Ni_Nj_vec;
     VectorDouble3D integral_Ni_derivative_Nj_x_vec;
     VectorDouble3D integral_Ni_derivative_Nj_y_vec;
     VectorDouble3D integral_div_Ni_dot_div_Nj_vec;
-    VectorDouble4D integral_Ni_Nj_derivative_Nk_x_vec;
-    VectorDouble4D integral_Ni_Nj_derivative_Nk_y_vec;
 
     // functions for computing domain integrals
     void evaluate_integral_Ni();
-    void evaluate_integral_derivative_Ni_x();
-    void evaluate_integral_derivative_Ni_y();
     void evaluate_integral_Ni_Nj();
     void evaluate_integral_Ni_derivative_Nj_x();
     void evaluate_integral_Ni_derivative_Nj_y();
     void evaluate_integral_div_Ni_dot_div_Nj();
-    void evaluate_integral_Ni_Nj_derivative_Nk_x();
-    void evaluate_integral_Ni_Nj_derivative_Nk_y();
 
     // default constructor
-    DomainIntegralUnit() {}
+    Integral2D() {}
 
     // constructor
-    DomainIntegralUnit(DomainUnit &domain_in)
+    Integral2D(Domain2D &domain_in)
     {
         
         // store domain and boundaries
@@ -115,7 +106,7 @@ class DomainIntegralUnit
 
 };
 
-void DomainIntegralUnit::evaluate_integral_Ni()
+void Integral2D::evaluate_integral_Ni()
 {
     /*
 
@@ -153,83 +144,7 @@ void DomainIntegralUnit::evaluate_integral_Ni()
 
 }
 
-void DomainIntegralUnit::evaluate_integral_derivative_Ni_x()
-{
-    /*
-
-    Calculates the integral of d(Ni)/dx.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
-    
-    // iterate for each domain element
-    for (int edid = 0; edid < domain_ptr->num_element; edid++){  
-    
-    // iterate for each test function combination
-    VectorDouble integral_part_i_vec;
-    for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++){  
-        
-        // iterate for each integration point
-        double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
-        {
-            integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * derivative_Ni_x_vec[edid][indx_l][indx_i];
-        }
-        integral_part_i_vec.push_back(integral_value);
-    
-    }
-    integral_derivative_Ni_x_vec.push_back(integral_part_i_vec);
-
-    }
-
-}
-
-void DomainIntegralUnit::evaluate_integral_derivative_Ni_y()
-{
-    /*
-
-    Calculates the integral of d(Ni)/dy.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
-    
-    // iterate for each domain element
-    for (int edid = 0; edid < domain_ptr->num_element; edid++){  
-    
-    // iterate for each test function combination
-    VectorDouble integral_part_i_vec;
-    for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++){  
-        
-        // iterate for each integration point
-        double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
-        {
-            integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * derivative_Ni_y_vec[edid][indx_l][indx_i];
-        }
-        integral_part_i_vec.push_back(integral_value);
-    
-    }
-    integral_derivative_Ni_y_vec.push_back(integral_part_i_vec);
-
-    }
-
-}
-
-void DomainIntegralUnit::evaluate_integral_Ni_Nj()
+void Integral2D::evaluate_integral_Ni_Nj()
 {
     /*
 
@@ -271,7 +186,7 @@ void DomainIntegralUnit::evaluate_integral_Ni_Nj()
 
 }
 
-void DomainIntegralUnit::evaluate_integral_Ni_derivative_Nj_x()
+void Integral2D::evaluate_integral_Ni_derivative_Nj_x()
 {
     /*
 
@@ -313,7 +228,7 @@ void DomainIntegralUnit::evaluate_integral_Ni_derivative_Nj_x()
 
 }
 
-void DomainIntegralUnit::evaluate_integral_Ni_derivative_Nj_y()
+void Integral2D::evaluate_integral_Ni_derivative_Nj_y()
 {
     /*
 
@@ -355,7 +270,7 @@ void DomainIntegralUnit::evaluate_integral_Ni_derivative_Nj_y()
 
 }
 
-void DomainIntegralUnit::evaluate_integral_div_Ni_dot_div_Nj()
+void Integral2D::evaluate_integral_div_Ni_dot_div_Nj()
 {
     /*
 
@@ -397,99 +312,7 @@ void DomainIntegralUnit::evaluate_integral_div_Ni_dot_div_Nj()
 
 }
 
-void DomainIntegralUnit::evaluate_integral_Ni_Nj_derivative_Nk_x()
-{
-    /*
-
-    Calculates the integral of Ni * Nj * d(Nk)/dx.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
-
-    // iterate for each domain element
-    for (int edid = 0; edid < domain_ptr->num_element; edid++){  
-    
-    // iterate for each test function combination
-    VectorDouble3D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++){  
-    VectorDouble2D integral_part_ij_vec;
-    for (int indx_j = 0; indx_j < domain_ptr->num_neighbor; indx_j++){
-    VectorDouble integral_part_ijk_vec;
-    for (int indx_k = 0; indx_k < domain_ptr->num_neighbor; indx_k++){
-
-        // iterate for each integration point
-        double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
-        {
-            integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * Ni_vec[edid][indx_l][indx_i] * Ni_vec[edid][indx_l][indx_j] * derivative_Ni_x_vec[edid][indx_l][indx_k];
-        }
-        integral_part_ijk_vec.push_back(integral_value);
-    
-    }
-    integral_part_ij_vec.push_back(integral_part_ijk_vec);
-    }
-    integral_part_i_vec.push_back(integral_part_ij_vec);
-    }
-    integral_Ni_Nj_derivative_Nk_x_vec.push_back(integral_part_i_vec);
-
-    }
-
-}
-
-void DomainIntegralUnit::evaluate_integral_Ni_Nj_derivative_Nk_y()
-{
-    /*
-
-    Calculates the integral of Ni * Nj * d(Nk)/dy.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =========
-    (none)
-
-    */
-
-    // iterate for each domain element
-    for (int edid = 0; edid < domain_ptr->num_element; edid++){  
-    
-    // iterate for each test function combination
-    VectorDouble3D integral_part_i_vec;
-    for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++){  
-    VectorDouble2D integral_part_ij_vec;
-    for (int indx_j = 0; indx_j < domain_ptr->num_neighbor; indx_j++){
-    VectorDouble integral_part_ijk_vec;
-    for (int indx_k = 0; indx_k < domain_ptr->num_neighbor; indx_k++){
-
-        // iterate for each integration point
-        double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
-        {
-            integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * Ni_vec[edid][indx_l][indx_i] * Ni_vec[edid][indx_l][indx_j] * derivative_Ni_y_vec[edid][indx_l][indx_k];
-        }
-        integral_part_ijk_vec.push_back(integral_value);
-    
-    }
-    integral_part_ij_vec.push_back(integral_part_ijk_vec);
-    }
-    integral_part_i_vec.push_back(integral_part_ij_vec);
-    }
-    integral_Ni_Nj_derivative_Nk_y_vec.push_back(integral_part_i_vec);
-
-    }
-
-}
-
-void DomainIntegralUnit::evaluate_Ni_tri3()
+void Integral2D::evaluate_Ni_tri3()
 {
 
     // weights for integration
@@ -612,7 +435,7 @@ void DomainIntegralUnit::evaluate_Ni_tri3()
 
 }
 
-void DomainIntegralUnit::evaluate_Ni_quad4()
+void Integral2D::evaluate_Ni_quad4()
 {
 
     // weights for integration

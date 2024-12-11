@@ -1,5 +1,5 @@
-#ifndef DOMAIN_UNIT
-#define DOMAIN_UNIT
+#ifndef DOMAIN_2D
+#define DOMAIN_2D
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -8,7 +8,7 @@
 namespace FEM2D
 {
 
-class DomainUnit
+class Domain2D
 {
     /*
 
@@ -120,10 +120,10 @@ class DomainUnit
     std::string file_in_element_str;
 
     // default constructor
-    DomainUnit() {}
+    Domain2D() {}
 
     // constructor
-    DomainUnit(std::string file_in_point_str_in, std::string file_in_element_str_in, int type_element_in)
+    Domain2D(std::string file_in_point_str_in, std::string file_in_element_str_in, int type_element_in)
     {
 
         // store variables
@@ -141,20 +141,20 @@ class DomainUnit
         }
 
         // read csv files
-        read_domain_point(file_in_point_str);
-        read_domain_element(file_in_element_str);
+        read_domain_point();
+        read_domain_element();
 
     }
     
     private:
 
     // functions
-    void read_domain_point(std::string file_in_point_str);
-    void read_domain_element(std::string file_in_element_str);
+    void read_domain_point();
+    void read_domain_element();
 
 };
 
-void DomainUnit::read_domain_point(std::string file_in_point_str)
+void Domain2D::read_domain_point()
 {
 
     // read file with points
@@ -216,7 +216,7 @@ void DomainUnit::read_domain_point(std::string file_in_point_str)
 
 }
 
-void DomainUnit::read_domain_element(std::string file_in_element_str)
+void Domain2D::read_domain_element()
 {
 
     // read file with elements

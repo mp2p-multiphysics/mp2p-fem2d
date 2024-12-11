@@ -1,14 +1,14 @@
-#ifndef VARIABLE_UNIT
-#define VARIABLE_UNIT
+#ifndef VARIABLE_2D
+#define VARIABLE_2D
 #include <fstream>
 #include <sstream>
-#include "domain_unit.hpp"
+#include "domain_2d.hpp"
 #include "container_typedef.hpp"
 
 namespace FEM2D
 {
 
-class VariableUnit
+class Variable2D
 {
     /*
 
@@ -33,15 +33,13 @@ class VariableUnit
     public:
 
     // domain where variable is applied
-    DomainUnit* domain_ptr;  
+    Domain2D* domain_ptr;  
 
     // values in variable
-    VectorDouble point_value_vec;  // key: domain ID; value: value
+    VectorDouble point_value_vec;  // [pdid] -> value
     
     // use for generating csv file
-    bool is_file_out = false;
     std::string file_out_base_str;
-    std::vector<std::string> file_out_base_vec;
 
     // functions
     void set_output(std::string file_out_str);
@@ -49,10 +47,10 @@ class VariableUnit
     void output_csv(int ts);
 
     // default constructor
-    VariableUnit() {}
+    Variable2D() {}
 
     // constructor
-    VariableUnit(DomainUnit &domain_in, double value_initial_in)
+    Variable2D(Domain2D &domain_in, double value_initial_in)
     {
 
         // store domain
@@ -68,7 +66,7 @@ class VariableUnit
 
 };
 
-void VariableUnit::set_output(std::string file_out_str)
+void Variable2D::set_output(std::string file_out_str)
 {
     /*
 
@@ -93,21 +91,9 @@ void VariableUnit::set_output(std::string file_out_str)
     // set file name
     file_out_base_str = file_out_str;
 
-    // generate CSV file when output_csv is called
-    is_file_out = true;
-
-    // split filename at '*'
-    // will be replaced with timestep later
-    std::stringstream file_out_base_stream(file_out_base_str);
-    std::string string_sub;
-    while(std::getline(file_out_base_stream, string_sub, '*'))
-    {
-        file_out_base_vec.push_back(string_sub);
-    }
-
 }
 
-void VariableUnit::output_csv()
+void Variable2D::output_csv()
 {
     /*
 
@@ -128,7 +114,7 @@ void VariableUnit::output_csv()
     */
 
     // do not make file if filename not set
-    if (!is_file_out)
+    if (file_out_base_str.empty())
     {
         return;
     }
@@ -148,7 +134,7 @@ void VariableUnit::output_csv()
 
 }
 
-void VariableUnit::output_csv(int ts)
+void Variable2D::output_csv(int ts)
 {
     /*
 
@@ -173,9 +159,19 @@ void VariableUnit::output_csv(int ts)
     */
 
     // do not make file if filename not set
-    if (!is_file_out)
+    if (file_out_base_str.empty())
     {
         return;
+    }
+
+    // split filename at '*'
+    // will be replaced with timestep later
+    std::vector<std::string> file_out_base_vec;
+    std::stringstream file_out_base_stream(file_out_base_str);
+    std::string string_sub;
+    while(std::getline(file_out_base_stream, string_sub, '*'))
+    {
+        file_out_base_vec.push_back(string_sub);
     }
 
     // create output filename

@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <vector>
 #include "container_typedef.hpp"
-#include "domain_unit.hpp"
-#include "variable_unit.hpp"
+#include "domain_2d.hpp"
+#include "variable_2d.hpp"
 
 namespace FEM2D
 {
@@ -18,8 +18,8 @@ class VariableGroup
 
     Variables
     =========
-    variable_ptr_vec_in : vector<VariableUnit*>
-        vector with pointers to VariableUnit objects.
+    variable_ptr_vec_in : vector<Variable2D*>
+        vector with pointers to Variable2D objects.
 
     Functions
     =========
@@ -40,7 +40,7 @@ class VariableGroup
     MapIntInt point_pgid_to_pfid_map;  // key: global ID; value: group ID
 
     // variables and domains
-    std::vector<VariableUnit*> variable_ptr_vec;  // vector of variables
+    std::vector<Variable2D*> variable_ptr_vec;  // vector of variables
 
     // starting column of variables in matrix equation
     int start_col = -1;
@@ -48,13 +48,14 @@ class VariableGroup
     // functions
     void output_csv();
     void output_csv(int ts);
-    VectorInt get_neighbor_pfid(DomainUnit* domain_ptr, int edid);
+    VectorInt get_neighbor_pfid(Domain1D* domain_ptr, int edid);
+    VectorInt get_neighbor_pfid(Domain2D* domain_ptr, int edid);
 
     // default constructor
     VariableGroup() {}
 
     // constructor
-    VariableGroup(std::vector<VariableUnit*> variable_ptr_vec_in)
+    VariableGroup(std::vector<Variable2D*> variable_ptr_vec_in)
     {
         
         // store vector of variables
@@ -153,7 +154,7 @@ void VariableGroup::output_csv(int ts)
 
 }
 
-VectorInt VariableGroup::get_neighbor_pfid(DomainUnit* domain_ptr, int edid)
+VectorInt VariableGroup::get_neighbor_pfid(Domain1D* domain_ptr, int edid)
 {
     /*
     
@@ -161,8 +162,45 @@ VectorInt VariableGroup::get_neighbor_pfid(DomainUnit* domain_ptr, int edid)
 
     Arguments
     =========
-    domain_ptr : DomainUnit*
-        Pointer to DomainUnit object with element.
+    domain_ptr : Domain2D*
+        Pointer to Domain2D object with element.
+    edid : int
+        Domain ID of the element.
+
+    Returns
+    =======
+    pfid_vec : VectorInt
+        vector with group IDs of the points surrounding the element.
+
+    */
+
+    // get surrounding points
+    VectorInt pgid_vec = domain_ptr->element_edid_plid_to_pgid_vec[edid];
+
+    // initialize pfid vector
+    VectorInt pfid_vec;
+
+    // iterate for each point and get pfid
+    for (int pgid : pgid_vec)
+    {
+        int pfid = point_pgid_to_pfid_map[pgid];
+        pfid_vec.push_back(pfid);
+    }
+    
+    return pfid_vec;
+
+}
+
+VectorInt VariableGroup::get_neighbor_pfid(Domain2D* domain_ptr, int edid)
+{
+    /*
+    
+    Outputs a vector with the group IDs of the points surrounding an element.
+
+    Arguments
+    =========
+    domain_ptr : Domain2D*
+        Pointer to Domain2D object with element.
     edid : int
         Domain ID of the element.
 

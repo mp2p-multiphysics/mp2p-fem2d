@@ -2,12 +2,9 @@
 #define PHYSICSSTEADY_BASE
 #include <vector>
 #include "Eigen/Eigen"
-#include "boundary_group.hpp"
-#include "boundaryintegral_group.hpp"
 #include "container_typedef.hpp"
-#include "domain_group.hpp"
-#include "domainintegral_group.hpp"
-#include "scalar_group.hpp"
+#include "scalar_1d.hpp"
+#include "scalar_2d.hpp"
 #include "variable_group.hpp"
 
 namespace FEM2D
@@ -38,21 +35,21 @@ class PhysicsSteadyBase
 
     public:
 
-    // vector of boundary, scalar, and variable groups
-    std::vector<ScalarGroup*> scalar_group_ptr_vec;
-    std::vector<VariableGroup*> variable_group_ptr_vec;
-    std::vector<BoundaryGroup*> boundary_group_ptr_vec;
+    // vector of scalars and vectors
+    std::vector<Scalar1D*> scalar1d_ptr_vec;
+    std::vector<Scalar2D*> scalar2d_ptr_vec;
+    std::vector<VariableGroup*> variablegroup_ptr_vec;
 
     // starting row of test functions in matrix equation
     int start_row = -1;
 
     // functions
     virtual void matrix_fill(Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec);
-    virtual void set_start_row(int start_row_in);
-    virtual int get_start_row();
-    virtual std::vector<ScalarGroup*> get_scalar_group_ptr_vec();
-    virtual std::vector<VariableGroup*> get_variable_group_ptr_vec();
-    virtual std::vector<BoundaryGroup*> get_boundary_group_ptr_vec();
+    virtual void set_start_row(int start_row_in) {start_row = start_row_in;}
+    virtual int get_start_row() {return start_row;}
+    virtual std::vector<Scalar1D*> get_scalar1d_ptr_vec() {return scalar1d_ptr_vec;}
+    virtual std::vector<Scalar2D*> get_scalar2d_ptr_vec() {return scalar2d_ptr_vec;}
+    virtual std::vector<VariableGroup*> get_variablegroup_ptr_vec() {return variablegroup_ptr_vec;}
 
     // default constructor
     PhysicsSteadyBase() {}
@@ -79,111 +76,6 @@ void PhysicsSteadyBase::matrix_fill(Eigen::SparseMatrix<double> &a_mat, Eigen::V
     (none)
 
     */
-
-}
-
-void PhysicsSteadyBase::set_start_row(int start_row_in)
-{
-    /*
-
-    Sets the starting row in A and b where entries are filled up.
-
-    Arguments
-    =========
-    start_row_in : int
-        Starting row in A and b.
-
-    Returns
-    =======
-    (none)
-
-    */
-    
-    start_row = start_row_in;
-
-}
-
-int PhysicsSteadyBase::get_start_row()
-{
-    /*
-
-    Returns the starting row.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =======
-    start_row : int
-        Starting row in A and b.
-
-    */
-    
-    return start_row;
-
-}
-
-std::vector<BoundaryGroup*> PhysicsSteadyBase::get_boundary_group_ptr_vec()
-{
-    /*
-
-    Returns the pointer to the BoundaryGroup object tied to this physics.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =======
-    boundary_group_ptr : BoundaryGroup*
-        Pointer to BoundaryGroup object.
-
-    */
-    
-    return boundary_group_ptr_vec;
-
-}
-
-std::vector<ScalarGroup*> PhysicsSteadyBase::get_scalar_group_ptr_vec()
-{
-    /*
-
-    Returns the vector containing pointers to ScalarGroup objects tied to this physics.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =======
-    scalar_group_ptr : vector<ScalarGroup*>
-        Vector containing pointers to ScalarGroup objects.
-
-    */
-    
-    return scalar_group_ptr_vec;
-
-}
-
-std::vector<VariableGroup*> PhysicsSteadyBase::get_variable_group_ptr_vec()
-{
-    /*
-
-    Returns the vector containing pointers to VariableGroup objects tied to this physics.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =======
-    variable_group_ptr : vector<VariableGroup*>
-        Vector containing pointers to VariableGroup objects.
-
-    */
-    
-    return variable_group_ptr_vec;
 
 }
 

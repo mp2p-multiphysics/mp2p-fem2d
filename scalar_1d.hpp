@@ -1,16 +1,16 @@
-#ifndef SCALAR_UNIT
-#define SCALAR_UNIT
+#ifndef SCALAR_1D
+#define SCALAR_1D
 #include <fstream>
 #include <sstream>
 #include <functional>
 #include "container_typedef.hpp"
-#include "domain_unit.hpp"
-#include "variable_unit.hpp"
+#include "domain_1d.hpp"
+#include "variable_2d.hpp"
 
 namespace FEM2D
 {
 
-class ScalarUnit
+class Scalar1D
 {
     /*
 
@@ -54,7 +54,7 @@ class ScalarUnit
     public:
 
     // domain where variable is applied
-    DomainUnit* domain_ptr;
+    Domain1D* domain_ptr;
 
     // values in scalar
     VectorDouble point_value_vec;  // key: point domain ID; value: value
@@ -63,12 +63,10 @@ class ScalarUnit
     bool is_value_constant = true;
     double value_constant = 0;  // used if value is constant
     std::function<double(double, double, VectorDouble)> value_function;  // used if value is non-constant
-    std::vector<VariableUnit*> variable_ptr_vec;  // variables that values depend on
+    std::vector<Variable2D*> variable_ptr_vec;  // variables that values depend on
 
     // use for generating csv file
-    bool is_file_out = false;
     std::string file_out_base_str;
-    std::vector<std::string> file_out_base_vec;
 
     // functions
     void set_output(std::string file_out_str);
@@ -78,10 +76,10 @@ class ScalarUnit
     VectorDouble get_neighbor_value(int edid);
 
     // default constructor
-    ScalarUnit() {}
+    Scalar1D() {}
     
     // constructor for constant values
-    ScalarUnit(DomainUnit &domain_in, double value_constant_in)
+    Scalar1D(Domain1D &domain_in, double value_constant_in)
     {
 
         // store domain
@@ -97,7 +95,7 @@ class ScalarUnit
     }
 
     // constructor for non-constant values
-    ScalarUnit(DomainUnit &domain_in, std::function<double(double, double, VectorDouble)> value_function_in, std::vector<VariableUnit*> variable_ptr_vec_in)
+    Scalar1D(Domain1D &domain_in, std::function<double(double, double, VectorDouble)> value_function_in, std::vector<Variable2D*> variable_ptr_vec_in)
     {
 
         // store domain
@@ -115,7 +113,7 @@ class ScalarUnit
 
 };
 
-void ScalarUnit::set_output(std::string file_out_str)
+void Scalar1D::set_output(std::string file_out_str)
 {
     /*
 
@@ -140,21 +138,9 @@ void ScalarUnit::set_output(std::string file_out_str)
     // set file name
     file_out_base_str = file_out_str;
 
-    // generate CSV file when output_csv is called
-    is_file_out = true;
-
-    // split filename at '*'
-    // will be replaced with timestep later
-    std::stringstream file_out_base_stream(file_out_base_str);
-    std::string string_sub;
-    while(std::getline(file_out_base_stream, string_sub, '*'))
-    {
-        file_out_base_vec.push_back(string_sub);
-    }
-
 }
 
-void ScalarUnit::output_csv()
+void Scalar1D::output_csv()
 {
     /*
 
@@ -175,7 +161,7 @@ void ScalarUnit::output_csv()
     */
 
     // do not make file if filename not set
-    if (!is_file_out)
+    if (file_out_base_str.empty())
     {
         return;
     }
@@ -195,7 +181,7 @@ void ScalarUnit::output_csv()
 
 }
 
-void ScalarUnit::output_csv(int ts)
+void Scalar1D::output_csv(int ts)
 {
     /*
 
@@ -218,9 +204,19 @@ void ScalarUnit::output_csv(int ts)
     */
 
     // do not make file if filename not set
-    if (!is_file_out)
+    if (file_out_base_str.empty())
     {
         return;
+    }
+
+    // split filename at '*'
+    // will be replaced with timestep later
+    std::vector<std::string> file_out_base_vec;
+    std::stringstream file_out_base_stream(file_out_base_str);
+    std::string string_sub;
+    while(std::getline(file_out_base_stream, string_sub, '*'))
+    {
+        file_out_base_vec.push_back(string_sub);
     }
 
     // create output filename
@@ -246,7 +242,7 @@ void ScalarUnit::output_csv(int ts)
 
 }
 
-void ScalarUnit::update_value()
+void Scalar1D::update_value()
 {
     /*
 
@@ -290,7 +286,7 @@ void ScalarUnit::update_value()
 
 }
 
-VectorDouble ScalarUnit::get_neighbor_value(int edid)
+VectorDouble Scalar1D::get_neighbor_value(int edid)
 {
     /*
     

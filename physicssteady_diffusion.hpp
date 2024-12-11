@@ -2,13 +2,15 @@
 #define PHYSICSSTEADY_DIFFUSION
 #include <vector>
 #include "Eigen/Eigen"
-#include "boundary_group.hpp"
-#include "boundaryintegral_group.hpp"
 #include "container_typedef.hpp"
-#include "domain_group.hpp"
-#include "domainintegral_group.hpp"
+#include "domain_1d.hpp"
+#include "domain_2d.hpp"
+#include "integral_1d.hpp"
+#include "integral_2d.hpp"
 #include "physicssteady_base.hpp"
-#include "scalar_group.hpp"
+#include "scalar_1d.hpp"
+#include "scalar_2d.hpp"
+#include "variable_2d.hpp"
 #include "variable_group.hpp"
 
 namespace FEM2D
@@ -60,97 +62,133 @@ class PhysicsSteadyDiffusion : public PhysicsSteadyBase
     public:
 
     // variables
-    DomainGroup *domain_group_ptr;
-    DomainIntegralGroup *domainintegral_group_ptr;
-    VariableGroup *value_group_ptr;
-    ScalarGroup *diffusioncoefficient_group_ptr;
-    ScalarGroup *generationcoefficient_group_ptr;
-    BoundaryGroup *boundary_group_ptr;
-    BoundaryIntegralGroup *boundaryintegral_group_ptr;
+    VariableGroup* value_ptr;
 
-    // vector of scalar, variable, and boundary groups
-    std::vector<ScalarGroup*> scalar_group_ptr_vec;
-    std::vector<VariableGroup*> variable_group_ptr_vec;
-    std::vector<BoundaryGroup*> boundary_group_ptr_vec;
+    // domain objects
+    std::vector<Domain2D*> domain_ptr_vec;
+    std::vector<Integral2D*> integral_ptr_vec;
+    std::vector<Scalar2D*> diffusioncoefficient_ptr_vec;
+    std::vector<Scalar2D*> generationcoefficient_ptr_vec;
+
+    // boundary objects - dirichlet
+    std::vector<Domain1D*> dirichlet_domain_ptr_vec;
+    std::vector<Scalar1D*> dirichlet_constant_ptr_vec;
+
+    // boundary objects - neumann
+    std::vector<Domain1D*> neumann_domain_ptr_vec;
+    std::vector<Integral1D*> neumann_integral_ptr_vec;
+    std::vector<Scalar1D*> neumann_flux_ptr_vec;
+
+    // vectors of objects to update
+    std::vector<Scalar1D*> scalar1d_ptr_vec;
+    std::vector<Scalar2D*> scalar2d_ptr_vec;
+    std::vector<VariableGroup*> variablegroup_ptr_vec;
 
     // starting row of test functions in matrix equation
     int start_row = -1;
 
     // functions
     void matrix_fill(Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec);
-    void set_start_row(int start_row_in);
-    int get_start_row();
-    std::vector<ScalarGroup*> get_scalar_group_ptr_vec();
-    std::vector<VariableGroup*> get_variable_group_ptr_vec();
-    std::vector<BoundaryGroup*> get_boundary_group_ptr_vec();
+    void set_variablegroup(VariableGroup &value_in);
+    void set_domain(Domain2D &domain_in, Integral2D &integral_in, Scalar2D &diffusioncoefficient_in, Scalar2D &generationcoefficient_in);
+    void set_boundary_dirichlet(Domain1D &domain_in, Scalar1D &value_constant_in);
+    void set_boundary_neumann(Domain1D &domain_in, Integral1D &integral_in, Scalar1D &value_flux_in);
+
+    // getter and setter functions
+    void set_start_row(int start_row_in) {start_row = start_row_in;}
+    int get_start_row() {return start_row;}
+    std::vector<Scalar1D*> get_scalar1d_ptr_vec() {return scalar1d_ptr_vec;}
+    std::vector<Scalar2D*> get_scalar2d_ptr_vec() {return scalar2d_ptr_vec;}
+    std::vector<VariableGroup*> get_variablegroup_ptr_vec() {return variablegroup_ptr_vec;}
 
     // default constructor
     PhysicsSteadyDiffusion() {}
 
-    // constructor
-    PhysicsSteadyDiffusion
-    (
-        DomainGroup &domain_group_in, DomainIntegralGroup &domainintegral_group_in,
-        VariableGroup &value_group_in,
-        ScalarGroup &diffusioncoefficient_group_in, ScalarGroup &generationcoefficient_group_in,
-        BoundaryGroup &boundary_group_in, BoundaryIntegralGroup &boundaryintegral_group_in
-    )
-    {
-        
-        // store variables
-        domain_group_ptr = &domain_group_in;
-        domainintegral_group_ptr = &domainintegral_group_in;
-        value_group_ptr = &value_group_in;
-        diffusioncoefficient_group_ptr = &diffusioncoefficient_group_in;
-        generationcoefficient_group_ptr = &generationcoefficient_group_in;
-        boundary_group_ptr = &boundary_group_in;
-        boundaryintegral_group_ptr = &boundaryintegral_group_in;
-
-        // set boundary conditions
-        boundary_group_ptr->set_boundary_type({0}, {1, 2});
-
-        // vector of scalar and variable groups 
-        scalar_group_ptr_vec = {diffusioncoefficient_group_ptr, generationcoefficient_group_ptr};
-        variable_group_ptr_vec = {value_group_ptr};
-        boundary_group_ptr_vec = {boundary_group_ptr};
-
-        // calculate integrals
-        domainintegral_group_ptr->evaluate_integral_div_Ni_dot_div_Nj();
-        domainintegral_group_ptr->evaluate_integral_Ni();
-        boundaryintegral_group_ptr->evaluate_integral_Ni();
-        boundaryintegral_group_ptr->evaluate_integral_Ni_Nj();
-
-    }
-
     private:
+
     void matrix_fill_domain
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
-        DomainUnit *domain_ptr, DomainIntegralUnit *domainintegral_ptr,
-        ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *generationcoefficient_ptr
+        Domain2D *domain_ptr, Integral2D *integral_ptr,
+        Scalar2D *diffusioncoefficient_ptr, Scalar2D *generationcoefficient_ptr
     );
-    void matrix_fill_natural
+    void matrix_fill_neumann
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
-        DomainUnit *domain_ptr,
-        ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *generationcoefficient_ptr,
-        BoundaryUnit *boundary_ptr, BoundaryIntegralUnit *boundaryintegral_ptr
+        Domain1D *domain_ptr, Integral1D *integral_ptr,
+        Scalar1D *value_flux_ptr
     );
-    void matrix_fill_essential_clear
+    void matrix_fill_dirichlet_clear
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
-        DomainUnit *domain_ptr,
-        BoundaryUnit *boundary_ptr
+        Domain1D *domain_ptr
     );
-    void matrix_fill_essential
+    void matrix_fill_dirichlet
     (
         Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
-        DomainUnit *domain_ptr,
-        ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *generationcoefficient_ptr,
-        BoundaryUnit *boundary_ptr, BoundaryIntegralUnit *boundaryintegral_ptr
+        Domain1D *domain_ptr,
+        Scalar1D *value_constant_ptr
     );
 
 };
+
+void PhysicsSteadyDiffusion::set_variablegroup(VariableGroup &value_in)
+{
+    
+    // set variable groups
+    value_ptr = &value_in;
+
+    // add to vector of variable groups
+    variablegroup_ptr_vec.push_back(&value_in);
+
+}
+
+void PhysicsSteadyDiffusion::set_domain(Domain2D &domain_in, Integral2D &integral_in, Scalar2D &diffusioncoefficient_in, Scalar2D &generationcoefficient_in)
+{
+
+    // add to vector of domain objects
+    domain_ptr_vec.push_back(&domain_in);
+    integral_ptr_vec.push_back(&integral_in);
+    diffusioncoefficient_ptr_vec.push_back(&diffusioncoefficient_in);
+    generationcoefficient_ptr_vec.push_back(&generationcoefficient_in);
+
+    // add to vector of scalar2d objects
+    scalar2d_ptr_vec.push_back(&diffusioncoefficient_in);
+    scalar2d_ptr_vec.push_back(&generationcoefficient_in);
+
+    // calculate integrals
+    integral_in.evaluate_integral_Ni();
+    integral_in.evaluate_integral_div_Ni_dot_div_Nj();
+
+}
+
+void PhysicsSteadyDiffusion::set_boundary_dirichlet(Domain1D &domain_in, Scalar1D &value_constant_in)
+{
+
+    // add to vector of boundary objects
+    dirichlet_domain_ptr_vec.push_back(&domain_in);
+    dirichlet_constant_ptr_vec.push_back(&value_constant_in);
+
+    // add to vector of scalar1d objects
+    scalar1d_ptr_vec.push_back(&value_constant_in);
+
+}
+
+void PhysicsSteadyDiffusion::set_boundary_neumann(Domain1D &domain_in, Integral1D &integral_in, Scalar1D &value_flux_in)
+{
+
+    // add to vector of boundary objects
+    neumann_domain_ptr_vec.push_back(&domain_in);
+    neumann_integral_ptr_vec.push_back(&integral_in);
+    neumann_flux_ptr_vec.push_back(&value_flux_in);
+
+    // add to vector of scalar1d objects
+    scalar1d_ptr_vec.push_back(&value_flux_in);
+
+    // calculate integrals
+    integral_in.evaluate_integral_Ni();
+
+}
 
 void PhysicsSteadyDiffusion::matrix_fill
 (
@@ -177,68 +215,56 @@ void PhysicsSteadyDiffusion::matrix_fill
     */
 
    // iterate through each domain
-   for (int indx_d = 0; indx_d < domain_group_ptr->domain_ptr_vec.size(); indx_d++)
+   for (int indx_d = 0; indx_d < domain_ptr_vec.size(); indx_d++)
    {
 
-        // subset the domain and integrals
-        DomainUnit *domain_ptr = domain_group_ptr->domain_ptr_vec[indx_d];
-        DomainIntegralUnit *domainintegral_ptr = domainintegral_group_ptr->integral_ptr_vec[indx_d];
-
-        // subset the scalars
-        ScalarUnit *diffusioncoefficient_ptr = diffusioncoefficient_group_ptr->scalar_ptr_vec[indx_d];
-        ScalarUnit *generationcoefficient_ptr = generationcoefficient_group_ptr->scalar_ptr_vec[indx_d];
+        // subset domain objects
+        Domain2D *domain_ptr = domain_ptr_vec[indx_d];
+        Integral2D *integral_ptr = integral_ptr_vec[indx_d];
+        Scalar2D *diffusioncoefficient_ptr = diffusioncoefficient_ptr_vec[indx_d];
+        Scalar2D *generationcoefficient_ptr = generationcoefficient_ptr_vec[indx_d];
 
         // fill up matrix with domain equations
-        matrix_fill_domain(a_mat, b_vec, x_vec, domain_ptr, domainintegral_ptr, diffusioncoefficient_ptr, generationcoefficient_ptr);
+        matrix_fill_domain(a_mat, b_vec, x_vec, domain_ptr, integral_ptr, diffusioncoefficient_ptr, generationcoefficient_ptr);
 
    }
 
-   // iterate through each natural boundary
-   for (int indx_d = 0; indx_d < domain_group_ptr->domain_ptr_vec.size(); indx_d++)
+   // iterate through each neumann boundary
+   for (int indx_d = 0; indx_d < neumann_domain_ptr_vec.size(); indx_d++)
    {
 
-        // subset the boundary and integrals
-        DomainUnit *domain_ptr = domain_group_ptr->domain_ptr_vec[indx_d];
-        BoundaryUnit *boundary_ptr = boundary_group_ptr->boundary_ptr_vec[indx_d];
-        BoundaryIntegralUnit *boundaryintegral_ptr = boundaryintegral_group_ptr->integral_ptr_vec[indx_d];
-
-        // subset the scalars
-        ScalarUnit *diffusioncoefficient_ptr = diffusioncoefficient_group_ptr->scalar_ptr_vec[indx_d];
-        ScalarUnit *generationcoefficient_ptr = generationcoefficient_group_ptr->scalar_ptr_vec[indx_d];
+        // subset domain objects
+        Domain1D *domain_ptr = neumann_domain_ptr_vec[indx_d];
+        Integral1D *integral_ptr = neumann_integral_ptr_vec[indx_d];
+        Scalar1D *value_flux_ptr = neumann_flux_ptr_vec[indx_d];
 
         // fill up matrix with boundary conditions
-        matrix_fill_natural(a_mat, b_vec, x_vec, domain_ptr, diffusioncoefficient_ptr, generationcoefficient_ptr, boundary_ptr, boundaryintegral_ptr);
+        matrix_fill_neumann(a_mat, b_vec, x_vec, domain_ptr, integral_ptr, value_flux_ptr);
 
    }
 
-   // clear equations with essential boundary conditions
-   for (int indx_d = 0; indx_d < domain_group_ptr->domain_ptr_vec.size(); indx_d++)
+   // clear equations with dirichlet boundary conditions
+   for (int indx_d = 0; indx_d < dirichlet_domain_ptr_vec.size(); indx_d++)
    {
 
-        // subset the boundary
-        DomainUnit *domain_ptr = domain_group_ptr->domain_ptr_vec[indx_d];
-        BoundaryUnit *boundary_ptr = boundary_group_ptr->boundary_ptr_vec[indx_d];
+        // subset domain objects
+        Domain1D *domain_ptr = dirichlet_domain_ptr_vec[indx_d];
 
         // fill up matrix with boundary conditions
-        matrix_fill_essential_clear(a_mat, b_vec, x_vec, domain_ptr, boundary_ptr);
+        matrix_fill_dirichlet_clear(a_mat, b_vec, x_vec, domain_ptr);
 
    }
 
-   // iterate through each essential boundary
-   for (int indx_d = 0; indx_d < domain_group_ptr->domain_ptr_vec.size(); indx_d++)
+   // iterate through each dirichlet boundary
+   for (int indx_d = 0; indx_d < dirichlet_domain_ptr_vec.size(); indx_d++)
    {
 
-        // subset the boundary
-        DomainUnit *domain_ptr = domain_group_ptr->domain_ptr_vec[indx_d];
-        BoundaryUnit *boundary_ptr = boundary_group_ptr->boundary_ptr_vec[indx_d];
-        BoundaryIntegralUnit *boundaryintegral_ptr = boundaryintegral_group_ptr->integral_ptr_vec[indx_d];
-
-        // subset the scalars
-        ScalarUnit *diffusioncoefficient_ptr = diffusioncoefficient_group_ptr->scalar_ptr_vec[indx_d];
-        ScalarUnit *generationcoefficient_ptr = generationcoefficient_group_ptr->scalar_ptr_vec[indx_d];
+        // subset domain objects
+        Domain1D *domain_ptr = dirichlet_domain_ptr_vec[indx_d];
+        Scalar1D *value_constant_ptr = dirichlet_constant_ptr_vec[indx_d];
 
         // fill up matrix with boundary conditions
-        matrix_fill_essential(a_mat, b_vec, x_vec, domain_ptr, diffusioncoefficient_ptr, generationcoefficient_ptr, boundary_ptr, boundaryintegral_ptr);
+        matrix_fill_dirichlet(a_mat, b_vec, x_vec, domain_ptr, value_constant_ptr);
 
    }
 
@@ -247,8 +273,8 @@ void PhysicsSteadyDiffusion::matrix_fill
 void PhysicsSteadyDiffusion::matrix_fill_domain
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
-    DomainUnit *domain_ptr, DomainIntegralUnit *domainintegral_ptr,
-    ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *generationcoefficient_ptr
+    Domain2D *domain_ptr, Integral2D *integral_ptr,
+    Scalar2D *diffusioncoefficient_ptr, Scalar2D *generationcoefficient_ptr
 )
 {
 
@@ -260,289 +286,115 @@ void PhysicsSteadyDiffusion::matrix_fill_domain
         VectorDouble diffcoeff_vec = diffusioncoefficient_ptr->get_neighbor_value(edid);
         VectorDouble gencoeff_vec = generationcoefficient_ptr->get_neighbor_value(edid);
 
+        // get group ID of points
+        VectorInt pfid_vec = value_ptr->get_neighbor_pfid(domain_ptr, edid);
+
+        // matrix indexing
         // matrix row = start_row of test function (physics) + group ID of variable
         // matrix column = start_column of variable + group ID of variable
-
-        // get group ID of points
-        // used for getting matrix rows and columns
-        VectorInt pfid_vec = value_group_ptr->get_neighbor_pfid(domain_ptr, edid);
 
         // calculate a_mat coefficients
         for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++){
         for (int indx_j = 0; indx_j < domain_ptr->num_neighbor; indx_j++){
             int mat_row = start_row + pfid_vec[indx_i];
-            int mat_col = value_group_ptr->start_col + pfid_vec[indx_j];
-            a_mat.coeffRef(mat_row, mat_col) += diffcoeff_vec[indx_i] * domainintegral_ptr->integral_div_Ni_dot_div_Nj_vec[edid][indx_i][indx_j];
+            int mat_col = value_ptr->start_col + pfid_vec[indx_j];
+            a_mat.coeffRef(mat_row, mat_col) += diffcoeff_vec[indx_i] * integral_ptr->integral_div_Ni_dot_div_Nj_vec[edid][indx_i][indx_j];
         }}
 
         // calculate b_vec coefficients
         for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
             int mat_row = start_row + pfid_vec[indx_i];
-            b_vec.coeffRef(mat_row) += gencoeff_vec[indx_i] * domainintegral_ptr->integral_Ni_vec[edid][indx_i];
+            b_vec.coeffRef(mat_row) += gencoeff_vec[indx_i] * integral_ptr->integral_Ni_vec[edid][indx_i];
         }
 
     }
 
 }
 
-void PhysicsSteadyDiffusion::matrix_fill_natural
+void PhysicsSteadyDiffusion::matrix_fill_neumann
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
-    DomainUnit *domain_ptr,
-    ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *generationcoefficient_ptr,
-    BoundaryUnit *boundary_ptr,  BoundaryIntegralUnit *boundaryintegral_ptr
+    Domain1D *domain_ptr, Integral1D *integral_ptr,
+    Scalar1D *value_flux_ptr
 )
 {
 
-    // iterate for each natural boundary element
-    for (int bnid = 0; bnid < boundary_ptr->num_natural; bnid++)
+    // iterate for each domain element
+    for (int edid = 0; edid < domain_ptr->num_element; edid++)
     {
 
-        // get element
-        int egid = boundary_ptr->natural_egid_vec[bnid];
-        int edid = domain_ptr->element_egid_to_edid_map[egid];
-
-        // get boundary data
-        int btid = boundary_ptr->boundary_btid_vec[bnid];
-        VectorInt plid_vec = boundary_ptr->natural_blid_to_plid_vec[bnid];
-        VectorDouble2D parameter_mat = boundary_ptr->natural_blid_to_parameter_vec[bnid];
-        
-        // calculate boundary key
-        int boundary_key = boundaryintegral_ptr->get_boundary_key(plid_vec);
+        // get scalar values of points around element
+        VectorDouble value_flux_vec = value_flux_ptr->get_neighbor_value(edid);
 
         // get group ID of points
-        // used for getting matrix rows and columns
-        VectorInt pfid_vec = value_group_ptr->get_neighbor_pfid(domain_ptr, edid);
+        VectorInt pfid_vec = value_ptr->get_neighbor_pfid(domain_ptr, edid);
 
-        // iterate for each boundary point
-        for (int indx_b = 0; indx_b < boundary_ptr->num_neighbor; indx_b++)
+        // calculate b_vec coefficients
+        for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
-
-            // get boundary point data
-            int indx_i = plid_vec[indx_b];
-            VectorDouble parameter_vec = parameter_mat[indx_b];
-
-            // apply boundary condition
             int mat_row = start_row + pfid_vec[indx_i];
-            switch (btid)
-            {
-                case 1:  // neumann
-                    b_vec.coeffRef(mat_row) += parameter_vec[0] * boundaryintegral_ptr->integral_Ni_vec[edid][boundary_key][indx_i];
-                break;
-                case 2:  // robin
-                    b_vec.coeffRef(mat_row) += parameter_vec[0] * boundaryintegral_ptr->integral_Ni_vec[edid][boundary_key][indx_i];
-                    for (int indx_j = 0; indx_j < domain_ptr->num_neighbor; indx_j++)
-                    {
-                        int mat_col = value_group_ptr->start_col + pfid_vec[indx_i];
-                        a_mat.coeffRef(mat_row, mat_col) += -parameter_vec[1] * boundaryintegral_ptr->integral_Ni_Nj_vec[edid][boundary_key][indx_i][indx_j];
-                    }
-                break;
-            }
-            
+            b_vec.coeffRef(mat_row) += value_flux_vec[indx_i] * integral_ptr->integral_Ni_vec[edid][indx_i];
         }
 
     }
 
 }
 
-void PhysicsSteadyDiffusion::matrix_fill_essential_clear
+void PhysicsSteadyDiffusion::matrix_fill_dirichlet_clear
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
-    DomainUnit *domain_ptr,
-    BoundaryUnit *boundary_ptr
+    Domain1D *domain_ptr
 )
 {
 
-    // iterate for each essential boundary element
-    for (int beid = 0; beid < boundary_ptr->num_essential; beid++)
+    // iterate for each domain element
+    for (int edid = 0; edid < domain_ptr->num_element; edid++)
     {
 
-        // get element
-        int egid = boundary_ptr->essential_egid_vec[beid];
-        int edid = domain_ptr->element_egid_to_edid_map[egid];
-
-        // get boundary data
-        VectorInt plid_vec = boundary_ptr->essential_blid_to_plid_vec[beid];
-
         // get group ID of points
-        // used for getting matrix rows and columns
-        VectorInt pfid_vec = value_group_ptr->get_neighbor_pfid(domain_ptr, edid);
+        VectorInt pfid_vec = value_ptr->get_neighbor_pfid(domain_ptr, edid);
 
-        // iterate for each boundary point
-        for (int indx_b = 0; indx_b < boundary_ptr->num_neighbor; indx_b++)
+        // clear rows
+        for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
-            
-            // get boundary point data
-            int indx_i = plid_vec[indx_b];
-
-            // clear row
             int mat_row = start_row + pfid_vec[indx_i];
             a_mat.row(mat_row) *= 0.;
             b_vec.coeffRef(mat_row) = 0.;
-
         }
 
     }
 
 }
 
-void PhysicsSteadyDiffusion::matrix_fill_essential
+void PhysicsSteadyDiffusion::matrix_fill_dirichlet
 (
     Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
-    DomainUnit *domain_ptr,
-    ScalarUnit *diffusioncoefficient_ptr, ScalarUnit *generationcoefficient_ptr,
-    BoundaryUnit *boundary_ptr, BoundaryIntegralUnit *boundaryintegral_ptr
+    Domain1D *domain_ptr,
+    Scalar1D *value_constant_ptr
 )
 {
 
-    // iterate for each essential boundary element
-    for (int beid = 0; beid < boundary_ptr->num_essential; beid++)
+    // iterate for each domain element
+    for (int edid = 0; edid < domain_ptr->num_element; edid++)
     {
 
-        // get element
-        int egid = boundary_ptr->essential_egid_vec[beid];
-        int edid = domain_ptr->element_egid_to_edid_map[egid];
-
-        // get boundary data
-        int btid = boundary_ptr->boundary_btid_vec[beid];
-        VectorInt plid_vec = boundary_ptr->essential_blid_to_plid_vec[beid];
-        VectorDouble2D parameter_mat = boundary_ptr->essential_blid_to_parameter_vec[beid];
-        
-        // calculate boundary key
-        int boundary_key = boundaryintegral_ptr->get_boundary_key(plid_vec);
+        // get scalar values of points around element
+        VectorDouble value_constant_vec = value_constant_ptr->get_neighbor_value(edid);
 
         // get group ID of points
-        // used for getting matrix rows and columns
-        VectorInt pfid_vec = value_group_ptr->get_neighbor_pfid(domain_ptr, edid);
+        VectorInt pfid_vec = value_ptr->get_neighbor_pfid(domain_ptr, edid);
 
-        // iterate for each boundary point
-        for (int indx_b = 0; indx_b < boundary_ptr->num_neighbor; indx_b++)
+        // clear rows
+        for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
-
-            // get boundary point data
-            int indx_i = plid_vec[indx_b];
-            VectorDouble parameter_vec = parameter_mat[indx_b];
-
-            // apply boundary condition
             int mat_row = start_row + pfid_vec[indx_i];
-            int mat_col = value_group_ptr->start_col + pfid_vec[indx_i];
-            switch (btid)
-            {
-                case 0:  // dirichlet
-                    a_mat.coeffRef(mat_row, mat_col) += 1.;
-                    b_vec.coeffRef(mat_row) += parameter_vec[0];
-                break;
-            }
-            
+            int mat_col = value_ptr->start_col + pfid_vec[indx_i];
+            a_mat.coeffRef(mat_row, mat_col) += 1.;
+            b_vec.coeffRef(mat_row) += value_constant_vec[indx_i];
         }
 
     }
-
-}
-
-void PhysicsSteadyDiffusion::set_start_row(int start_row_in)
-{
-    /*
-
-    Sets the starting row in A and b where entries are filled up.
-
-    Arguments
-    =========
-    start_row_in : int
-        Starting row in A and b.
-
-    Returns
-    =======
-    (none)
-
-    */
-
-    start_row = start_row_in;
-
-}
-
-int PhysicsSteadyDiffusion::get_start_row()
-{
-    /*
-
-    Returns the starting row.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =======
-    start_row : int
-        Starting row in A and b.
-
-    */
-
-    return start_row;
-
-}
-
-std::vector<BoundaryGroup*> PhysicsSteadyDiffusion::get_boundary_group_ptr_vec()
-{
-    /*
-
-    Returns the pointer to the BoundaryGroup object tied to this physics.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =======
-    boundary_group_ptr : BoundaryGroup*
-        Pointer to BoundaryGroup object.
-
-    */
-    
-    return boundary_group_ptr_vec;
-
-}
-
-std::vector<ScalarGroup*> PhysicsSteadyDiffusion::get_scalar_group_ptr_vec()
-{
-    /*
-
-    Returns the vector containing pointers to ScalarGroup objects tied to this physics.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =======
-    scalar_group_ptr : vector<ScalarGroup*>
-        Vector containing pointers to ScalarGroup objects.
-
-    */
-    
-    return scalar_group_ptr_vec;
-
-}
-
-std::vector<VariableGroup*> PhysicsSteadyDiffusion::get_variable_group_ptr_vec()
-{
-    /*
-
-    Returns the vector containing pointers to VariableGroup objects tied to this physics.
-
-    Arguments
-    =========
-    (none)
-
-    Returns
-    =======
-    variable_group_ptr : vector<VariableGroup*>
-        Vector containing pointers to VariableGroup objects.
-
-    */
-    
-    return variable_group_ptr_vec;
 
 }
 
