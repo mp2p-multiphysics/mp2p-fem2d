@@ -123,7 +123,7 @@ void Integral2D::evaluate_integral_Ni()
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
+        for (int indx_l = 0; indx_l < weight_vec.size(); indx_l++) 
         {
             integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * Ni_vec[edid][indx_l][indx_i];
         }
@@ -163,7 +163,7 @@ void Integral2D::evaluate_integral_Ni_Nj()
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
+        for (int indx_l = 0; indx_l < weight_vec.size(); indx_l++) 
         {
             integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * Ni_vec[edid][indx_l][indx_i] * Ni_vec[edid][indx_l][indx_j];
         }
@@ -205,7 +205,7 @@ void Integral2D::evaluate_integral_Ni_derivative_Nj_x()
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
+        for (int indx_l = 0; indx_l < weight_vec.size(); indx_l++) 
         {
             integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * Ni_vec[edid][indx_l][indx_i] * derivative_Ni_x_vec[edid][indx_l][indx_j];
         }
@@ -247,7 +247,7 @@ void Integral2D::evaluate_integral_Ni_derivative_Nj_y()
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
+        for (int indx_l = 0; indx_l < weight_vec.size(); indx_l++) 
         {
             integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * Ni_vec[edid][indx_l][indx_i] * derivative_Ni_y_vec[edid][indx_l][indx_j];
         }
@@ -289,7 +289,7 @@ void Integral2D::evaluate_integral_div_Ni_dot_div_Nj()
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
+        for (int indx_l = 0; indx_l < weight_vec.size(); indx_l++) 
         {
             integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * (derivative_Ni_x_vec[edid][indx_l][indx_i] * derivative_Ni_x_vec[edid][indx_l][indx_j] + derivative_Ni_y_vec[edid][indx_l][indx_i] * derivative_Ni_y_vec[edid][indx_l][indx_j]);
         }
@@ -308,13 +308,13 @@ void Integral2D::evaluate_Ni_tri3()
 {
 
     // weights for integration
-    const double M_1_6 = 1./6.;
-    weight_vec = {M_1_6, M_1_6, M_1_6};
+    weight_vec = {0.5};
 
     // integration points
     // dimensionless coordinates if element is scaled to [0, 1] * [0, 1]
-    double a_arr[3] = {0.5, 0.5, 0.0};
-    double b_arr[3] = {0.5, 0.0, 0.5};
+    const double M_1_3 = 1./3.;
+    double a_arr[3] = {M_1_3};
+    double b_arr[3] = {M_1_3};
 
     // iterate for each domain element
     for (int edid = 0; edid < domain_ptr->num_element; edid++)

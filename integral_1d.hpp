@@ -102,7 +102,7 @@ void Integral1D::evaluate_integral_Ni()
         
         // iterate for each integration point
         double integral_value = 0;
-        for (int indx_l = 0; indx_l < domain_ptr->num_neighbor; indx_l++) 
+        for (int indx_l = 0; indx_l < weight_vec.size(); indx_l++) 
         {
             integral_value += weight_vec[indx_l] * jacobian_determinant_vec[edid][indx_l] * Ni_vec[edid][indx_l][indx_i];
         }

@@ -16,11 +16,6 @@ typedef std::vector<VectorDouble> VectorDouble2D;
 typedef std::vector<VectorDouble2D> VectorDouble3D;
 typedef std::vector<VectorDouble3D> VectorDouble4D;
 
-// nested map vectors
-typedef std::unordered_map<int, std::unordered_map<int, double>> MapVector2D;
-typedef std::unordered_map<int, std::unordered_map<int, VectorDouble>> MapVector3D;
-typedef std::unordered_map<int, std::unordered_map<int, VectorDouble2D>> MapVector4D;
-
 // typedef of unordered maps
 typedef std::unordered_map<int, int> MapIntInt;
 
