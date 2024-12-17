@@ -45,7 +45,7 @@ class PhysicsTransientBase
 
     // functions
     virtual void matrix_fill(
-        Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
         Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt
     );
     virtual void set_start_row(int start_row_in) {start_row = start_row_in;}
@@ -61,7 +61,7 @@ class PhysicsTransientBase
 
 void PhysicsTransientBase::matrix_fill
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::SparseMatrix<double> &c_mat, Eigen::VectorXd &d_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
     Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt
 )
 {
@@ -71,9 +71,9 @@ void PhysicsTransientBase::matrix_fill
 
     Arguments
     =========
-    a_mat : Eigen::SparseMatrix<double>
+    a_mat : Eigen::SparseMatrix<double, Eigen::RowMajor>
         A in Ax(t+1) = Cx(t) + d.
-    c_mat : Eigen::SparseMatrix<double>
+    c_mat : Eigen::SparseMatrix<double, Eigen::RowMajor>
         C in Ax(t+1) = Cx(t) + d.
     d_vec : Eigen::VectorXd
         d in Ax(t+1) = Cx(t) + d.

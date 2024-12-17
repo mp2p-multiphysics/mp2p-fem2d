@@ -47,8 +47,8 @@ class MatrixEquationTransient
     std::vector<VariableGroup*> variablegroup_ptr_vec;
 
     // matrix equation variables
-    Eigen::SparseMatrix<double> a_mat;
-    Eigen::SparseMatrix<double> c_mat;
+    Eigen::SparseMatrix<double, Eigen::RowMajor> a_mat;
+    Eigen::SparseMatrix<double, Eigen::RowMajor> c_mat;
     Eigen::VectorXd d_vec;
     Eigen::VectorXd x_vec;
     Eigen::VectorXd x_last_timestep_vec;
@@ -115,8 +115,8 @@ class MatrixEquationTransient
         num_equation = assign_start_col;
 
         // initialize matrix equation variables
-        a_mat = Eigen::SparseMatrix<double> (num_equation, num_equation);
-        c_mat = Eigen::SparseMatrix<double> (num_equation, num_equation);
+        a_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
+        c_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
         d_vec = Eigen::VectorXd::Zero(num_equation);
         x_vec = Eigen::VectorXd::Zero(num_equation);
 
@@ -325,8 +325,8 @@ void MatrixEquationTransient::iterate_solution(double dt)
     }
 
     // reset matrices
-    a_mat = Eigen::SparseMatrix<double> (num_equation, num_equation);
-    c_mat = Eigen::SparseMatrix<double> (num_equation, num_equation);
+    a_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
+    c_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
     d_vec = Eigen::VectorXd::Zero(num_equation);
     x_vec = Eigen::VectorXd::Zero(num_equation);
 
@@ -338,7 +338,7 @@ void MatrixEquationTransient::iterate_solution(double dt)
 
     // solve the matrix equation
     // b_vec = c_mat*x_last_timestep_vec + d_vec
-    Eigen::SparseLU<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
+    Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::COLAMDOrdering<int>> solver;
     solver.analyzePattern(a_mat);
     solver.factorize(a_mat);
     x_vec = solver.solve(c_mat*x_last_timestep_vec + d_vec);

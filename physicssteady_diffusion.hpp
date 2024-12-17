@@ -68,7 +68,7 @@ class PhysicsSteadyDiffusion : public PhysicsSteadyBase
     int start_row = -1;
 
     // functions
-    void matrix_fill(Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec);
+    void matrix_fill(Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec);
     void set_variablegroup(VariableGroup &value_in);
     void set_domain(Domain2D &domain_in, Integral2D &integral_in, Scalar2D &diffusioncoefficient_in, Scalar2D &generationcoefficient_in);
     void set_boundary_dirichlet(Domain1D &domain_in, Scalar1D &value_constant_in);
@@ -88,24 +88,24 @@ class PhysicsSteadyDiffusion : public PhysicsSteadyBase
 
     void matrix_fill_domain
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain2D *domain_ptr, Integral2D *integral_ptr,
         Scalar2D *diffusioncoefficient_ptr, Scalar2D *generationcoefficient_ptr
     );
     void matrix_fill_neumann
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain1D *domain_ptr, Integral1D *integral_ptr,
         Scalar1D *value_flux_ptr
     );
     void matrix_fill_dirichlet_clear
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain1D *domain_ptr
     );
     void matrix_fill_dirichlet
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain1D *domain_ptr,
         Scalar1D *value_constant_ptr
     );
@@ -241,7 +241,7 @@ void PhysicsSteadyDiffusion::set_boundary_neumann(Domain1D &domain_in, Integral1
 
 void PhysicsSteadyDiffusion::matrix_fill
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec
 )
 {
     /*
@@ -250,7 +250,7 @@ void PhysicsSteadyDiffusion::matrix_fill
 
     Arguments
     =========
-    a_mat : Eigen::SparseMatrix<double>
+    a_mat : Eigen::SparseMatrix<double, Eigen::RowMajor>
         A in Ax = b.
     b_vec : Eigen::VectorXd
         b in Ax = b.
@@ -321,7 +321,7 @@ void PhysicsSteadyDiffusion::matrix_fill
 
 void PhysicsSteadyDiffusion::matrix_fill_domain
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain2D *domain_ptr, Integral2D *integral_ptr,
     Scalar2D *diffusioncoefficient_ptr, Scalar2D *generationcoefficient_ptr
 )
@@ -363,7 +363,7 @@ void PhysicsSteadyDiffusion::matrix_fill_domain
 
 void PhysicsSteadyDiffusion::matrix_fill_neumann
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain1D *domain_ptr, Integral1D *integral_ptr,
     Scalar1D *value_flux_ptr
 )
@@ -392,7 +392,7 @@ void PhysicsSteadyDiffusion::matrix_fill_neumann
 
 void PhysicsSteadyDiffusion::matrix_fill_dirichlet_clear
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain1D *domain_ptr
 )
 {
@@ -418,7 +418,7 @@ void PhysicsSteadyDiffusion::matrix_fill_dirichlet_clear
 
 void PhysicsSteadyDiffusion::matrix_fill_dirichlet
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain1D *domain_ptr,
     Scalar1D *value_constant_ptr
 )

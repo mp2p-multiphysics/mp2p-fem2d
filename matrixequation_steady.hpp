@@ -44,7 +44,8 @@ class MatrixEquationSteady
     std::vector<VariableGroup*> variablegroup_ptr_vec;
 
     // matrix equation variables
-    Eigen::SparseMatrix<double> a_mat;
+    Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::COLAMDOrdering<int>> solver;
+    Eigen::SparseMatrix<double, Eigen::RowMajor> a_mat;
     Eigen::VectorXd b_vec;
     Eigen::VectorXd x_vec;
     int num_equation = 0;
@@ -100,7 +101,8 @@ class MatrixEquationSteady
         num_equation = assign_start_col;
 
         // initialize matrix equation variables
-        a_mat = Eigen::SparseMatrix<double> (num_equation, num_equation);
+        a_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
+        a_mat.reserve(10*num_equation);
         b_vec = Eigen::VectorXd::Zero(num_equation);
         x_vec = Eigen::VectorXd::Zero(num_equation);
 
@@ -268,9 +270,9 @@ void MatrixEquationSteady::iterate_solution()
     }
 
     // reset matrices
-    a_mat = Eigen::SparseMatrix<double> (num_equation, num_equation);
-    b_vec = Eigen::VectorXd::Zero(num_equation);
-    x_vec = Eigen::VectorXd::Zero(num_equation);
+    a_mat.setZero();
+    b_vec.setZero();
+    x_vec.setZero();
 
     // fill up a_mat and b_vec with each physics
     for (auto physics_ptr : physics_ptr_vec)
@@ -279,7 +281,6 @@ void MatrixEquationSteady::iterate_solution()
     }
 
     // solve the matrix equation
-    Eigen::SparseLU<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>> solver;
     solver.analyzePattern(a_mat);
     solver.factorize(a_mat);
     x_vec = solver.solve(b_vec);

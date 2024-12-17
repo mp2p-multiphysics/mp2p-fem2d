@@ -80,7 +80,7 @@ class PhysicsSteadyNavierStokes : public PhysicsSteadyBase
     int start_row = -1;
 
     // functions
-    void matrix_fill(Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec);
+    void matrix_fill(Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec);
     void set_variablegroup(VariableGroup &velocity_x_in, VariableGroup &velocity_y_in, VariableGroup &pressure_in);
     void set_domain(Domain2D &domain_line_in, Domain2D &domain_quad_in, IntegralTaylorHood2D &integral_in, Scalar2D &density_in, Scalar2D &viscosity_in, Scalar2D &force_x_in, Scalar2D &force_y_in);
     void set_boundary_velocity(Domain1D &domain_quad_in, Scalar1D &velocity_x_in, Scalar1D &velocity_y_in);
@@ -101,40 +101,40 @@ class PhysicsSteadyNavierStokes : public PhysicsSteadyBase
 
     void matrix_fill_domain
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain2D *domain_line_ptr, Domain2D *domain_quad_ptr, IntegralTaylorHood2D *integral_ptr,
         Scalar2D *density_ptr, Scalar2D *viscosity_ptr, Scalar2D *force_x_ptr, Scalar2D *force_y_ptr
     );
     void matrix_fill_velocity_clear
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain1D *domain_ptr
     );
     void matrix_fill_pressure_clear
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain1D *domain_ptr
     );
     void matrix_fill_pressure_point_clear
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain0D *domain_ptr
     );
     void matrix_fill_velocity
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain1D *domain_ptr,
         Scalar1D *velocity_x_ptr, Scalar1D *velocity_y_ptr
     );
     void matrix_fill_pressure
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain1D *domain_ptr,
         Scalar1D *pressure_ptr
     );
     void matrix_fill_pressure_point
     (
-        Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
         Domain0D *domain_ptr,
         Scalar0D *pressure_ptr
     );
@@ -326,7 +326,7 @@ void PhysicsSteadyNavierStokes::set_boundary_pressure(Domain0D &domain_in, Scala
 
 void PhysicsSteadyNavierStokes::matrix_fill
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec
 )
 {
     /*
@@ -335,7 +335,7 @@ void PhysicsSteadyNavierStokes::matrix_fill
 
     Arguments
     =========
-    a_mat : Eigen::SparseMatrix<double>
+    a_mat : Eigen::SparseMatrix<double, Eigen::RowMajor>
         A in Ax = b.
     b_vec : Eigen::VectorXd
         b in Ax = b.
@@ -408,7 +408,7 @@ void PhysicsSteadyNavierStokes::matrix_fill
 
 void PhysicsSteadyNavierStokes::matrix_fill_domain
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain2D *domain_line_ptr, Domain2D *domain_quad_ptr, IntegralTaylorHood2D *integral_ptr,
     Scalar2D *density_ptr, Scalar2D *viscosity_ptr, Scalar2D *force_x_ptr, Scalar2D *force_y_ptr
 )
@@ -600,7 +600,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_domain
 
 void PhysicsSteadyNavierStokes::matrix_fill_velocity_clear
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain1D *domain_ptr
 )
 {
@@ -639,7 +639,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_velocity_clear
 
 void PhysicsSteadyNavierStokes::matrix_fill_pressure_clear
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain1D *domain_ptr
 )
 {
@@ -668,7 +668,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_pressure_clear
 
 void PhysicsSteadyNavierStokes::matrix_fill_pressure_point_clear
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain0D *domain_ptr
 )
 {
@@ -697,7 +697,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_pressure_point_clear
 
 void PhysicsSteadyNavierStokes::matrix_fill_velocity
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain1D *domain_ptr,
     Scalar1D *velx_ptr, Scalar1D *vely_ptr
 )
@@ -743,7 +743,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_velocity
 
 void PhysicsSteadyNavierStokes::matrix_fill_pressure
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain1D *domain_ptr,
     Scalar1D *pres_ptr
 )
@@ -777,7 +777,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_pressure
 
 void PhysicsSteadyNavierStokes::matrix_fill_pressure_point
 (
-    Eigen::SparseMatrix<double> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
+    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::VectorXd &b_vec, Eigen::VectorXd &x_vec,
     Domain0D *domain_ptr,
     Scalar0D *pres_ptr
 )
