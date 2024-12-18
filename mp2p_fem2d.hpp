@@ -27,6 +27,7 @@
 #include "physicstransient_base.hpp"
 #include "physicstransient_convectiondiffusion.hpp"
 #include "physicstransient_diffusion.hpp"
+#include "physicstransient_navierstokes.hpp"
 #include "scalar_0d.hpp"
 #include "scalar_1d.hpp"
 #include "scalar_2d.hpp"

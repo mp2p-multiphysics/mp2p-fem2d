@@ -72,8 +72,8 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
 
     // functions
     void matrix_fill(
-        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-        Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt
+        EigenSparseMatrix &a_mat, EigenSparseMatrix &c_mat, EigenVector &d_vec,
+        EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt
     );
     void set_variablegroup(VariableGroup &value_in);
     void set_domain(Domain2D &domain_in, Integral2D &integral_in, Scalar2D &derivativecoefficient_in, Scalar2D &diffusioncoefficient_in, Scalar2D &velocity_x_in, Scalar2D &velocity_y_in, Scalar2D &generationcoefficient_in);
@@ -94,28 +94,28 @@ class PhysicsTransientConvectionDiffusion : public PhysicsTransientBase
 
     void matrix_fill_domain
     (
-        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-        Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
+        std::vector<EigenTriplet> &delta_a_triplet_vec, std::vector<EigenTriplet> &delta_c_triplet_vec, EigenVector &d_vec,
+        EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt,
         Domain2D *domain_ptr, Integral2D *integral_ptr,
         Scalar2D *derivativecoefficient_ptr, Scalar2D *diffusioncoefficient_ptr, Scalar2D *velocity_x_ptr, Scalar2D *velocity_y_ptr, Scalar2D *generationcoefficient_ptr
     );
     void matrix_fill_neumann
     (
-        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-        Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
+        EigenSparseMatrix &a_mat, EigenSparseMatrix &c_mat, EigenVector &d_vec,
+        EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt,
         Domain1D *domain_ptr, Integral1D *integral_ptr,
         Scalar1D *value_flux_ptr
     );
     void matrix_fill_dirichlet_clear
     (
-        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-        Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
+        EigenSparseMatrix &a_mat, EigenSparseMatrix &c_mat, EigenVector &d_vec,
+        EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt,
         Domain1D *domain_ptr
     );
     void matrix_fill_dirichlet
     (
-        Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-        Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
+        EigenSparseMatrix &a_mat, EigenSparseMatrix &c_mat, EigenVector &d_vec,
+        EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt,
         Domain1D *domain_ptr,
         Scalar1D *value_constant_ptr
     );
@@ -264,8 +264,8 @@ void PhysicsTransientConvectionDiffusion::set_boundary_neumann(Domain1D &domain_
 
 void PhysicsTransientConvectionDiffusion::matrix_fill
 (
-    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-    Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt
+    EigenSparseMatrix &a_mat, EigenSparseMatrix &c_mat, EigenVector &d_vec,
+    EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt
 )
 {
     /*
@@ -274,15 +274,15 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
 
     Arguments
     =========
-    a_mat : Eigen::SparseMatrix<double, Eigen::RowMajor>
+    a_mat : EigenSparseMatrix
         A in Ax(t+1) = Cx(t) + d.
-    c_mat : Eigen::SparseMatrix<double, Eigen::RowMajor>
+    c_mat : EigenSparseMatrix
         C in Ax(t+1) = Cx(t) + d.
-    d_vec : Eigen::VectorXd
+    d_vec : EigenVector
         d in Ax(t+1) = Cx(t) + d.
-    x_vec : Eigen::VectorXd
+    x_vec : EigenVector
         x(t+1) in Ax(t+1) = Cx(t) + d.
-    x_last_timestep_vec : Eigen::VectorXd
+    x_last_timestep_vec : EigenVector
         x(t) in Ax(t+1) = Cx(t) + d.
     dt : double
         Length of the timestep.
@@ -292,6 +292,13 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
     (none)
 
     */
+
+    // represent matrix as triplets for performance
+    std::vector<EigenTriplet> delta_a_triplet_vec;
+    std::vector<EigenTriplet> delta_c_triplet_vec;
+    int num_equation = a_mat.rows();
+    delta_a_triplet_vec.reserve(10*num_equation); // estimated number of entries
+    delta_c_triplet_vec.reserve(10*num_equation); // estimated number of entries
 
     // iterate through each domain
     for (int indx_d = 0; indx_d < domain_ptr_vec.size(); indx_d++)
@@ -308,12 +315,20 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
 
         // fill up matrix with domain equations
         matrix_fill_domain(
-            a_mat, c_mat, d_vec, x_vec, x_last_timestep_vec, dt,
+            delta_a_triplet_vec, delta_c_triplet_vec, d_vec, x_vec, x_last_timestep_vec, dt,
             domain_ptr, integral_ptr,
             derivativecoefficient_ptr, diffusioncoefficient_ptr, velocity_x_ptr, velocity_y_ptr, generationcoefficient_ptr
         );
 
     }
+
+    // convert triplet vector to sparse matrix
+    EigenSparseMatrix delta_a_mat(num_equation, num_equation);
+    EigenSparseMatrix delta_c_mat(num_equation, num_equation);
+    delta_a_mat.setFromTriplets(delta_a_triplet_vec.begin(), delta_a_triplet_vec.end());
+    delta_c_mat.setFromTriplets(delta_c_triplet_vec.begin(), delta_c_triplet_vec.end());
+    a_mat += delta_a_mat;
+    c_mat += delta_c_mat;
 
     // iterate through each neumann boundary
     for (int indx_d = 0; indx_d < neumann_domain_ptr_vec.size(); indx_d++)
@@ -367,8 +382,8 @@ void PhysicsTransientConvectionDiffusion::matrix_fill
 
 void PhysicsTransientConvectionDiffusion::matrix_fill_domain
 (
-    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-    Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
+    std::vector<EigenTriplet> &delta_a_triplet_vec, std::vector<EigenTriplet> &delta_c_triplet_vec, EigenVector &d_vec,
+    EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt,
     Domain2D *domain_ptr, Integral2D *integral_ptr,
     Scalar2D *derivativecoefficient_ptr, Scalar2D *diffusioncoefficient_ptr, Scalar2D *velocity_x_ptr, Scalar2D *velocity_y_ptr, Scalar2D *generationcoefficient_ptr
 )
@@ -397,13 +412,14 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_domain
         for (int indx_j = 0; indx_j < domain_ptr->num_neighbor; indx_j++){
             int mat_row = start_row + pfid_vec[indx_i];
             int mat_col = value_ptr->start_col + pfid_vec[indx_j];
-            a_mat.coeffRef(mat_row, mat_col) += (
+            delta_a_triplet_vec.push_back(EigenTriplet(
+                mat_row, mat_col,
                 (dervcoeff_vec[indx_i]/dt) * integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j] +
                 diffcoeff_vec[indx_i] * integral_ptr->integral_div_Ni_dot_div_Nj_vec[edid][indx_i][indx_j] +
                 velx_vec[indx_i] * integral_ptr->integral_Ni_derivative_Nj_x_vec[edid][indx_i][indx_j] +
                 vely_vec[indx_i] * integral_ptr->integral_Ni_derivative_Nj_y_vec[edid][indx_i][indx_j]
-            );
-            c_mat.coeffRef(mat_row, mat_col) += (dervcoeff_vec[indx_i]/dt) * integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j];
+            ));
+            delta_c_triplet_vec.push_back(EigenTriplet(mat_row, mat_col, (dervcoeff_vec[indx_i]/dt) * integral_ptr->integral_Ni_Nj_vec[edid][indx_i][indx_j]));
         }}
 
         // calculate d_vec coefficients
@@ -420,8 +436,8 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_domain
 
 void PhysicsTransientConvectionDiffusion::matrix_fill_neumann
 (
-    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-    Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
+    EigenSparseMatrix &a_mat, EigenSparseMatrix &c_mat, EigenVector &d_vec,
+    EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt,
     Domain1D *domain_ptr, Integral1D *integral_ptr,
     Scalar1D *value_flux_ptr
 )
@@ -450,8 +466,8 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_neumann
 
 void PhysicsTransientConvectionDiffusion::matrix_fill_dirichlet_clear
 (
-    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-    Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
+    EigenSparseMatrix &a_mat, EigenSparseMatrix &c_mat, EigenVector &d_vec,
+    EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt,
     Domain1D *domain_ptr
 )
 {
@@ -478,8 +494,8 @@ void PhysicsTransientConvectionDiffusion::matrix_fill_dirichlet_clear
 
 void PhysicsTransientConvectionDiffusion::matrix_fill_dirichlet
 (
-    Eigen::SparseMatrix<double, Eigen::RowMajor> &a_mat, Eigen::SparseMatrix<double, Eigen::RowMajor> &c_mat, Eigen::VectorXd &d_vec,
-    Eigen::VectorXd &x_vec, Eigen::VectorXd &x_last_timestep_vec, double dt,
+    EigenSparseMatrix &a_mat, EigenSparseMatrix &c_mat, EigenVector &d_vec,
+    EigenVector &x_vec, EigenVector &x_last_timestep_vec, double dt,
     Domain1D *domain_ptr,
     Scalar1D *value_constant_ptr
 )

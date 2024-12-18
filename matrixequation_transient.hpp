@@ -47,11 +47,12 @@ class MatrixEquationTransient
     std::vector<VariableGroup*> variablegroup_ptr_vec;
 
     // matrix equation variables
-    Eigen::SparseMatrix<double, Eigen::RowMajor> a_mat;
-    Eigen::SparseMatrix<double, Eigen::RowMajor> c_mat;
-    Eigen::VectorXd d_vec;
-    Eigen::VectorXd x_vec;
-    Eigen::VectorXd x_last_timestep_vec;
+    Eigen::SparseLU<EigenSparseMatrix, Eigen::COLAMDOrdering<int>> solver;
+    EigenSparseMatrix a_mat;
+    EigenSparseMatrix c_mat;
+    EigenVector d_vec;
+    EigenVector x_vec;
+    EigenVector x_last_timestep_vec;
     int num_equation = 0;
 
     // settings for timestepping
@@ -69,10 +70,7 @@ class MatrixEquationTransient
     void solve(bool verbose);
 
     // default constructor
-    MatrixEquationTransient()
-    {
-
-    }
+    MatrixEquationTransient() {};
 
     // constructor
     MatrixEquationTransient(std::vector<PhysicsTransientBase*> physics_ptr_vec_in)
@@ -115,10 +113,12 @@ class MatrixEquationTransient
         num_equation = assign_start_col;
 
         // initialize matrix equation variables
-        a_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
-        c_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
-        d_vec = Eigen::VectorXd::Zero(num_equation);
-        x_vec = Eigen::VectorXd::Zero(num_equation);
+        a_mat = EigenSparseMatrix (num_equation, num_equation);
+        c_mat = EigenSparseMatrix (num_equation, num_equation);
+        a_mat.reserve(20*num_equation);
+        c_mat.reserve(20*num_equation);
+        d_vec = EigenVector::Zero(num_equation);
+        x_vec = EigenVector::Zero(num_equation);
 
         // extract scalars and vectors from each physics
 
@@ -280,7 +280,7 @@ void MatrixEquationTransient::solve(bool verbose = true)
         {
 
             // store previous value of x_vec
-            Eigen::VectorXd x_last_iteration_vec = x_vec;
+            EigenVector x_last_iteration_vec = x_vec;
 
             // perform one iteration and store x_vec values into variables and scalars
             // this automatically updates a_mat, x_vec, and c_mat, and d_vec
@@ -325,10 +325,10 @@ void MatrixEquationTransient::iterate_solution(double dt)
     }
 
     // reset matrices
-    a_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
-    c_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
-    d_vec = Eigen::VectorXd::Zero(num_equation);
-    x_vec = Eigen::VectorXd::Zero(num_equation);
+    a_mat.setZero();
+    c_mat.setZero();
+    d_vec.setZero();
+    x_vec.setZero();
 
     // fill up a_mat, c_mat, and d_vec with each physics
     for (auto physics_ptr : physics_ptr_vec)
@@ -338,7 +338,6 @@ void MatrixEquationTransient::iterate_solution(double dt)
 
     // solve the matrix equation
     // b_vec = c_mat*x_last_timestep_vec + d_vec
-    Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::COLAMDOrdering<int>> solver;
     solver.analyzePattern(a_mat);
     solver.factorize(a_mat);
     x_vec = solver.solve(c_mat*x_last_timestep_vec + d_vec);

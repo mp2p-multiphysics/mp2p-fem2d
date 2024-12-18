@@ -44,10 +44,10 @@ class MatrixEquationSteady
     std::vector<VariableGroup*> variablegroup_ptr_vec;
 
     // matrix equation variables
-    Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor>, Eigen::COLAMDOrdering<int>> solver;
-    Eigen::SparseMatrix<double, Eigen::RowMajor> a_mat;
-    Eigen::VectorXd b_vec;
-    Eigen::VectorXd x_vec;
+    Eigen::SparseLU<EigenSparseMatrix, Eigen::COLAMDOrdering<int>> solver;
+    EigenSparseMatrix a_mat;
+    EigenVector b_vec;
+    EigenVector x_vec;
     int num_equation = 0;
 
     // settings for iteration
@@ -101,10 +101,10 @@ class MatrixEquationSteady
         num_equation = assign_start_col;
 
         // initialize matrix equation variables
-        a_mat = Eigen::SparseMatrix<double, Eigen::RowMajor> (num_equation, num_equation);
-        a_mat.reserve(10*num_equation);
-        b_vec = Eigen::VectorXd::Zero(num_equation);
-        x_vec = Eigen::VectorXd::Zero(num_equation);
+        a_mat = EigenSparseMatrix (num_equation, num_equation);
+        a_mat.reserve(20*num_equation);
+        b_vec = EigenVector::Zero(num_equation);
+        x_vec = EigenVector::Zero(num_equation);
 
         // extract scalars and vectors from each physics
 
@@ -227,7 +227,7 @@ void MatrixEquationSteady::solve(bool verbose = true)
     {
 
         // store previous value of x_vec
-        Eigen::VectorXd x_last_iteration_vec = x_vec;
+        EigenVector x_last_iteration_vec = x_vec;
 
         // perform one iteration and store x_vec values into variables and scalars
         // this automatically updates a_mat, x_vec, and b_vec

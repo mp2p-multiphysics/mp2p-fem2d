@@ -2,6 +2,7 @@
 #define CONTAINER_TYPEDEF
 #include <unordered_map>
 #include <vector>
+#include "Eigen/Eigen"
 
 namespace FEM2D
 {
@@ -16,8 +17,13 @@ typedef std::vector<VectorDouble> VectorDouble2D;
 typedef std::vector<VectorDouble2D> VectorDouble3D;
 typedef std::vector<VectorDouble3D> VectorDouble4D;
 
-// typedef of unordered maps
+// unordered maps
 typedef std::unordered_map<int, int> MapIntInt;
+
+// Eigen objects
+typedef Eigen::SparseMatrix<double, Eigen::RowMajor> EigenSparseMatrix;
+typedef Eigen::Triplet<double> EigenTriplet;
+typedef Eigen::VectorXd EigenVector;
 
 }
 

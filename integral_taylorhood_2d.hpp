@@ -29,6 +29,8 @@ class IntegralTaylorHood2D
         Calculates the integral of Ni * d(Mj)/dy over test functions in the linear domain.
     evaluate_integral_Mi_quad : void
         Calculates the integral of Mi over test functions in the quadratic domain.
+    evaluate_integral_Mi_Mj_quad : void
+        Calculates the integral of Mi * Mj over test functions in the quadratic domain.
     evaluate_integral_Mi_derivative_Nj_x_quad : void
         Calculates the integral of Mi * d(Nj)/dx over test functions in the quadratic domain.
     evaluate_integral_Mi_derivative_Nj_y_quad : void
@@ -85,6 +87,7 @@ class IntegralTaylorHood2D
     // vectors with quadratic domain integrals
     // index as follows: [edid][i][j][k]
     VectorDouble2D integral_Mi_quad_vec;
+    VectorDouble3D integral_Mi_Mj_quad_vec;
     VectorDouble3D integral_Mi_derivative_Nj_x_quad_vec;
     VectorDouble3D integral_Mi_derivative_Nj_y_quad_vec;
     VectorDouble3D integral_div_Mi_dot_div_Mj_quad_vec;
@@ -97,6 +100,7 @@ class IntegralTaylorHood2D
 
     // functions for computing quadratic domain integrals
     void evaluate_integral_Mi_quad();
+    void evaluate_integral_Mi_Mj_quad();
     void evaluate_integral_Mi_derivative_Nj_x_quad();
     void evaluate_integral_Mi_derivative_Nj_y_quad();
     void evaluate_integral_div_Mi_dot_div_Mj_quad();
@@ -249,6 +253,48 @@ void IntegralTaylorHood2D::evaluate_integral_Mi_quad()
     
     }
     integral_Mi_quad_vec.push_back(integral_part_i_vec);
+
+    }
+
+}
+
+void IntegralTaylorHood2D::evaluate_integral_Mi_Mj_quad()
+{
+    /*
+
+    Calculates the integral of Mi * Mj over test functions in the quadratic domain.
+
+    Arguments
+    =========
+    (none)
+
+    Returns
+    =========
+    (none)
+
+    */    
+
+    // iterate for each domain element
+    for (int edid = 0; edid < domain_quad_ptr->num_element; edid++){  
+    
+    // iterate for each test function combination
+    VectorDouble2D integral_part_i_vec;
+    for (int indx_i = 0; indx_i < domain_quad_ptr->num_neighbor; indx_i++){  
+    VectorDouble integral_part_ij_vec;
+    for (int indx_j = 0; indx_j < domain_quad_ptr->num_neighbor; indx_j++){
+        
+        // iterate for each integration point
+        double integral_value = 0;
+        for (int indx_l = 0; indx_l < weight_quad_vec.size(); indx_l++) 
+        {
+            integral_value += weight_quad_vec[indx_l] * jacobian_determinant_quad_vec[edid][indx_l] * Mi_quad_vec[edid][indx_l][indx_i] * Mi_quad_vec[edid][indx_l][indx_j];
+        }
+        integral_part_ij_vec.push_back(integral_value);
+    
+    }
+    integral_part_i_vec.push_back(integral_part_ij_vec);
+    }
+    integral_Mi_Mj_quad_vec.push_back(integral_part_i_vec);
 
     }
 
