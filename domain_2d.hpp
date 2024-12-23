@@ -22,7 +22,7 @@ class Domain2D
         Path to CSV file with data for domain elements.
     type_element_in : int
         Denotes type of element.
-        Use 0, 1, 2, or 3 to for tri3, quad4, tri6, or quad8.
+        Use 0, 1, 2, or 3 for tri3, quad4, tri6, or quad8.
 
     Notes
     ====

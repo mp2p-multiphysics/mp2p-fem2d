@@ -189,6 +189,8 @@ void PhysicsTransientConvectionDiffusion::set_domain(Domain2D &domain_in, Integr
     // add to vector of scalar2d objects
     scalar2d_ptr_vec.push_back(&derivativecoefficient_in);
     scalar2d_ptr_vec.push_back(&diffusioncoefficient_in);
+    scalar2d_ptr_vec.push_back(&velocity_x_in);
+    scalar2d_ptr_vec.push_back(&velocity_y_in);
     scalar2d_ptr_vec.push_back(&generationcoefficient_in);
 
     // calculate integrals
