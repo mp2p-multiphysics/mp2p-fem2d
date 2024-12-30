@@ -656,6 +656,7 @@ void PhysicsTransientNavierStokes::matrix_fill_velocity_clear
         {
             int velx_mat_row = start_row + offset_nsex + velx_pfid_vec[indx_i];
             a_mat.row(velx_mat_row) *= 0.;
+            c_mat.row(velx_mat_row) *= 0.;
             d_vec.coeffRef(velx_mat_row) = 0.;
         }
 
@@ -664,6 +665,7 @@ void PhysicsTransientNavierStokes::matrix_fill_velocity_clear
         {
             int vely_mat_row = start_row + offset_nsey + vely_pfid_vec[indx_i];
             a_mat.row(vely_mat_row) *= 0.;
+            c_mat.row(vely_mat_row) *= 0.;
             d_vec.coeffRef(vely_mat_row) = 0.;
         }
 
@@ -694,6 +696,7 @@ void PhysicsTransientNavierStokes::matrix_fill_pressure_clear
         {
             int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
             a_mat.row(mat_row) *= 0.;
+            c_mat.row(mat_row) *= 0.;
             d_vec.coeffRef(mat_row) = 0.;
         }
 
@@ -724,6 +727,7 @@ void PhysicsTransientNavierStokes::matrix_fill_pressure_point_clear
         {
             int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
             a_mat.row(mat_row) *= 0.;
+            c_mat.row(mat_row) *= 0.;
             d_vec.coeffRef(mat_row) = 0.;
         }
 

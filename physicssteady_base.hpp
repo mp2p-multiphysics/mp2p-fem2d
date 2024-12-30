@@ -24,9 +24,9 @@ class PhysicsSteadyBase
         Sets the starting row in A and b where entries are filled up.
     get_start_row : int
         Returns the starting row.
-    get_scalar1d_ptr_vec : vector<BoundaryGroup*>
+    get_scalar1d_ptr_vec : vector<Scalar1D*>
         Returns the vector containing pointers to Scalar1D objects tied to this physics.
-    get_scalar2d_ptr_vec : vector<ScalarGroup*>
+    get_scalar2d_ptr_vec : vector<Scalar2D*>
         Returns the vector containing pointers to Scalar2D objects tied to this physics.
     get_variablegroup_ptr_vec : vector<VariableGroup*>
         Returns the vector containing pointers to VariableGroup objects tied to this physics.
