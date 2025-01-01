@@ -262,7 +262,7 @@ void PhysicsSteadyConvectionDiffusion::matrix_fill
 
     Arguments
     =========
-    a_trivec : EigenSparseMatrix
+    a_trivec : EigenTripletVector
         A in Ax = b.
     b_vec : EigenVector
         b in Ax = b.

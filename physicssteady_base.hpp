@@ -64,7 +64,7 @@ void PhysicsSteadyBase::matrix_fill(EigenTripletVector &a_trivec, EigenVector &b
 
     Arguments
     =========
-    a_mat : EigenTripletVector
+    a_trivec : EigenTripletVector
         A in Ax = b.
     b_vec : EigenVector
         b in Ax = b.

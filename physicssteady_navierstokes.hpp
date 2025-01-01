@@ -345,7 +345,7 @@ void PhysicsSteadyNavierStokes::matrix_fill
 
     Arguments
     =========
-    a_trivec : EigenSparseMatrix
+    a_trivec : EigenTripletVector
         A in Ax = b.
     b_vec : EigenVector
         b in Ax = b.
@@ -655,7 +655,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_velocity
             b_vec.coeffRef(mat_row) += velx_vec[indx_i];
         }
 
-        // clear rows (velocity y)
+        // apply velocity y dirichlet BC
         for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
             int mat_row = start_row + offset_nsey + vely_pfid_vec[indx_i];
