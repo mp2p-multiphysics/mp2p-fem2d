@@ -102,12 +102,12 @@ class MatrixEquationSteady
         num_equation = assign_start_col;
 
         // initialize matrix equation variables
-        a_trivec.reserve(8*num_equation);
         a_mat = EigenSparseMatrix (num_equation, num_equation);
-        a_mat.reserve(8*num_equation);
         b_vec = EigenVector::Zero(num_equation);
         x_vec = EigenVector::Zero(num_equation);
-
+        a_trivec.reserve(20*num_equation);
+        a_mat.reserve(20*num_equation);
+        
         // extract scalars and vectors from each physics
 
         // initialize set of scalars and variables
@@ -282,13 +282,14 @@ void MatrixEquationSteady::matrix_solve()
     b_vec.setZero();
     x_vec.setZero();
 
-    // fill up a_mat and b_vec with each physics
+    // fill up a_trivec and b_vec with each physics
     for (auto physics_ptr : physics_ptr_vec)
     {
         physics_ptr->matrix_fill(a_trivec, b_vec, x_vec);
     }
 
     // convert triplet vector to sparse matrix
+    // this also resets a_mat
     a_mat.setFromTriplets(a_trivec.begin(), a_trivec.end());
 
     // solve the matrix equation
