@@ -45,6 +45,7 @@ class MatrixEquationSteady
 
     // matrix equation variables
     Eigen::SparseLU<EigenSparseMatrix, Eigen::COLAMDOrdering<int>> solver;
+    EigenTripletVector a_trivec;
     EigenSparseMatrix a_mat;
     EigenVector b_vec;
     EigenVector x_vec;
@@ -101,8 +102,9 @@ class MatrixEquationSteady
         num_equation = assign_start_col;
 
         // initialize matrix equation variables
+        a_trivec.reserve(8*num_equation);
         a_mat = EigenSparseMatrix (num_equation, num_equation);
-        a_mat.reserve(20*num_equation);
+        a_mat.reserve(8*num_equation);
         b_vec = EigenVector::Zero(num_equation);
         x_vec = EigenVector::Zero(num_equation);
 
@@ -170,9 +172,10 @@ class MatrixEquationSteady
     private:
 
     // functions
-    void iterate_solution();
-    void store_solution();
-    void output_solution();
+    void update_scalar();
+    void matrix_solve();
+    void update_variable();
+    void output_scalar_variable();
 
 };
 
@@ -219,8 +222,8 @@ void MatrixEquationSteady::solve(bool verbose = true)
 
     */
 
-    // initalize norm of residual
-    double residual_norm = std::numeric_limits<double>::max();
+    // initalize residual
+    double residual = std::numeric_limits<double>::max();
 
     // iterate to convergence
     for (int it = 0; it < num_iteration_max; it++)
@@ -229,22 +232,22 @@ void MatrixEquationSteady::solve(bool verbose = true)
         // store previous value of x_vec
         EigenVector x_last_iteration_vec = x_vec;
 
-        // perform one iteration and store x_vec values into variables and scalars
-        // this automatically updates a_mat, x_vec, and b_vec
-        iterate_solution();
-        store_solution();
+        // perform one iteration of Ax = b
+        update_scalar();
+        matrix_solve();
+        update_variable();
 
-        // calculate residual using previous x_vec and current a_mat and b_vec
-        residual_norm = (a_mat*x_last_iteration_vec - b_vec).norm();
+        // calculate residual
+        residual = (a_mat*x_last_iteration_vec - b_vec).norm();
 
         // display iteration count and norm
         if (verbose)
         {
-            std::cout << "Iteration: " << it << "; Residual L2 Norm: " << residual_norm << "\n";
+            std::cout << "Iteration: " << it << "; Residual L2 Norm: " << residual << "\n";
         }
         
         // stop if convergence is reached
-        if (residual_norm < residual_tol)
+        if (residual < residual_tol)
         {
             break;
         }
@@ -252,11 +255,11 @@ void MatrixEquationSteady::solve(bool verbose = true)
     }
 
     // write output files
-    output_solution();
+    output_scalar_variable();
 
 }
 
-void MatrixEquationSteady::iterate_solution()
+void MatrixEquationSteady::update_scalar()
 {
 
     // update scalars using most recent variable values
@@ -269,25 +272,34 @@ void MatrixEquationSteady::iterate_solution()
         scalar2d_ptr->update_value();
     }
 
+}
+
+void MatrixEquationSteady::matrix_solve()
+{
+
     // reset matrices
-    a_mat.setZero();
+    a_trivec.clear();
     b_vec.setZero();
     x_vec.setZero();
 
     // fill up a_mat and b_vec with each physics
     for (auto physics_ptr : physics_ptr_vec)
     {
-        physics_ptr->matrix_fill(a_mat, b_vec, x_vec);
+        physics_ptr->matrix_fill(a_trivec, b_vec, x_vec);
     }
 
+    // convert triplet vector to sparse matrix
+    a_mat.setFromTriplets(a_trivec.begin(), a_trivec.end());
+
     // solve the matrix equation
+    a_mat.makeCompressed();
     solver.analyzePattern(a_mat);
     solver.factorize(a_mat);
     x_vec = solver.solve(b_vec);
 
 }
 
-void MatrixEquationSteady::store_solution()
+void MatrixEquationSteady::update_variable()
 {
 
     // iterate through each variable group
@@ -319,7 +331,7 @@ void MatrixEquationSteady::store_solution()
 
 }
 
-void MatrixEquationSteady::output_solution()
+void MatrixEquationSteady::output_scalar_variable()
 {
 
     // iterate through each scalar and variable

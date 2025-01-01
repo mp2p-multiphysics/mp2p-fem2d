@@ -27,6 +27,18 @@ class PhysicsSteadyNavierStokes : public PhysicsSteadyBase
     NSE y-component: rho * (u * dv/dx + v * dv/dy) = -dp/dy + mu * (d^2(v)/dx^2 + d^2(v)/dy^2) + rho * g_y
     Continuity: du/dx + dv/dy = 0
 
+    Variables
+    =========
+    velocity_x_in : VariableGroup
+        u in the NSE and continuity equation.
+        Must be defined over a quadratic domain.
+    velocity_y_in : VariableGroup
+        v in the NSE and continuity equation.
+        Must be defined over a quadratic domain.
+    pressure_in : VariableGroup
+        p in the NSE.
+        Must be defined over a linear domain.
+
     Functions
     =========
     matrix_fill : void
@@ -48,6 +60,12 @@ class PhysicsSteadyNavierStokes : public PhysicsSteadyBase
     VariableGroup* velocity_x_ptr;
     VariableGroup* velocity_y_ptr;
     VariableGroup* pressure_ptr;
+
+    // vectors indicating dirichlet BCs
+    // [pfid] -> true if dirichlet bc
+    std::vector<bool> is_velocity_x_dirichlet_vec;  
+    std::vector<bool> is_velocity_y_dirichlet_vec;
+    std::vector<bool> is_pressure_dirichlet_vec;
 
     // domain objects
     std::vector<Domain2D*> domain_line_ptr_vec;
@@ -80,8 +98,7 @@ class PhysicsSteadyNavierStokes : public PhysicsSteadyBase
     int start_row = -1;
 
     // functions
-    void matrix_fill(EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec);
-    void set_variablegroup(VariableGroup &velocity_x_in, VariableGroup &velocity_y_in, VariableGroup &pressure_in);
+    void matrix_fill(EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec);
     void set_domain(Domain2D &domain_line_in, Domain2D &domain_quad_in, IntegralTaylorHood2D &integral_in, Scalar2D &density_in, Scalar2D &viscosity_in, Scalar2D &force_x_in, Scalar2D &force_y_in);
     void set_boundary_velocity(Domain1D &domain_quad_in, Scalar1D &velocity_x_in, Scalar1D &velocity_y_in);
     void set_boundary_pressure(Domain1D &domain_quad_in, Scalar1D &pressure_in); 
@@ -97,85 +114,55 @@ class PhysicsSteadyNavierStokes : public PhysicsSteadyBase
     // default constructor
     PhysicsSteadyNavierStokes() {}
 
+    // default constructor
+    PhysicsSteadyNavierStokes(VariableGroup &velocity_x_in, VariableGroup &velocity_y_in, VariableGroup &pressure_in)
+    {
+
+        // set variable groups
+        velocity_x_ptr = &velocity_x_in;
+        velocity_y_ptr = &velocity_y_in;
+        pressure_ptr = &pressure_in;
+
+        // add to vector of variable groups
+        variablegroup_ptr_vec.push_back(&velocity_x_in);
+        variablegroup_ptr_vec.push_back(&velocity_y_in);
+        variablegroup_ptr_vec.push_back(&pressure_in);
+
+        // vector indicating if dirichlet bc is applied
+        is_velocity_x_dirichlet_vec = std::vector<bool> (velocity_x_in.num_point, false);
+        is_velocity_y_dirichlet_vec = std::vector<bool> (velocity_y_in.num_point, false);
+        is_pressure_dirichlet_vec = std::vector<bool> (pressure_in.num_point, false);
+
+    }
+
     private:
 
     void matrix_fill_domain
     (
-        std::vector<EigenTriplet> &delta_a_triplet_vec, EigenVector &b_vec, EigenVector &x_vec,
+        EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec,
         Domain2D *domain_line_ptr, Domain2D *domain_quad_ptr, IntegralTaylorHood2D *integral_ptr,
         Scalar2D *density_ptr, Scalar2D *viscosity_ptr, Scalar2D *force_x_ptr, Scalar2D *force_y_ptr
     );
-    void matrix_fill_velocity_clear
-    (
-        EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
-        Domain1D *domain_ptr
-    );
-    void matrix_fill_pressure_clear
-    (
-        EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
-        Domain1D *domain_ptr
-    );
-    void matrix_fill_pressure_point_clear
-    (
-        EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
-        Domain0D *domain_ptr
-    );
     void matrix_fill_velocity
     (
-        EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
+        EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec,
         Domain1D *domain_ptr,
         Scalar1D *velocity_x_ptr, Scalar1D *velocity_y_ptr
     );
     void matrix_fill_pressure
     (
-        EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
+        EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec,
         Domain1D *domain_ptr,
         Scalar1D *pressure_ptr
     );
     void matrix_fill_pressure_point
     (
-        EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
+        EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec,
         Domain0D *domain_ptr,
         Scalar0D *pressure_ptr
     );
 
 };
-
-void PhysicsSteadyNavierStokes::set_variablegroup(VariableGroup &velocity_x_in, VariableGroup &velocity_y_in, VariableGroup &pressure_in)
-{
-    /*
-    
-    Set variables used in this physics.
-
-    Arguments
-    =========
-    velocity_x_in : VariableGroup
-        u in the NSE and continuity equation.
-        Must be defined over a quadratic domain.
-    velocity_y_in : VariableGroup
-        v in the NSE and continuity equation.
-        Must be defined over a quadratic domain.
-    pressure_in : VariableGroup
-        p in the NSE.
-        Must be defined over a linear domain.
-
-    Returns
-    =======
-    (none)
-    
-    */
-
-    // set variable groups
-    velocity_x_ptr = &velocity_x_in;
-    velocity_y_ptr = &velocity_y_in;
-    pressure_ptr = &pressure_in;
-
-    // add to vector of variable groups
-    variablegroup_ptr_vec.push_back(&velocity_x_in);
-    variablegroup_ptr_vec.push_back(&velocity_y_in);
-    variablegroup_ptr_vec.push_back(&pressure_in);
-
-}
 
 void PhysicsSteadyNavierStokes::set_domain(Domain2D &domain_line_in, Domain2D &domain_quad_in, IntegralTaylorHood2D &integral_in, Scalar2D &density_in, Scalar2D &viscosity_in, Scalar2D &force_x_in, Scalar2D &force_y_in)
 {
@@ -269,6 +256,15 @@ void PhysicsSteadyNavierStokes::set_boundary_velocity(Domain1D &domain_quad_in, 
     scalar1d_ptr_vec.push_back(&velocity_x_in);
     scalar1d_ptr_vec.push_back(&velocity_y_in);
 
+    // specify points with dirichlet BC
+    for (auto pgid : domain_quad_in.point_pdid_to_pgid_vec)
+    {
+        int velx_pfid = velocity_x_ptr->point_pgid_to_pfid_map[pgid];
+        int vely_pfid = velocity_y_ptr->point_pgid_to_pfid_map[pgid];
+        is_velocity_x_dirichlet_vec[velx_pfid] = true;
+        is_velocity_y_dirichlet_vec[vely_pfid] = true;
+    }
+
 }
 
 void PhysicsSteadyNavierStokes::set_boundary_pressure(Domain1D &domain_line_in, Scalar1D &pressure_in)
@@ -297,6 +293,13 @@ void PhysicsSteadyNavierStokes::set_boundary_pressure(Domain1D &domain_line_in, 
     // add to vector of scalar1d objects
     scalar1d_ptr_vec.push_back(&pressure_in);
 
+    // specify points with dirichlet BC
+    for (auto pgid : domain_line_in.point_pdid_to_pgid_vec)
+    {
+        int pres_pfid = pressure_ptr->point_pgid_to_pfid_map[pgid];
+        is_pressure_dirichlet_vec[pres_pfid] = true;
+    }
+
 }
 
 void PhysicsSteadyNavierStokes::set_boundary_pressure(Domain0D &domain_in, Scalar0D &pressure_in)
@@ -322,11 +325,18 @@ void PhysicsSteadyNavierStokes::set_boundary_pressure(Domain0D &domain_in, Scala
     pressure_point_domain_ptr_vec.push_back(&domain_in);
     pressure_point_ptr_vec.push_back(&pressure_in);
 
+    // specify points with dirichlet BC
+    for (auto pgid : domain_in.point_pdid_to_pgid_vec)
+    {
+        int pres_pfid = pressure_ptr->point_pgid_to_pfid_map[pgid];
+        is_pressure_dirichlet_vec[pres_pfid] = true;
+    }
+
 }
 
 void PhysicsSteadyNavierStokes::matrix_fill
 (
-    EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec
+    EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec
 )
 {
     /*
@@ -335,7 +345,7 @@ void PhysicsSteadyNavierStokes::matrix_fill
 
     Arguments
     =========
-    a_mat : EigenSparseMatrix
+    a_trivec : EigenSparseMatrix
         A in Ax = b.
     b_vec : EigenVector
         b in Ax = b.
@@ -348,14 +358,9 @@ void PhysicsSteadyNavierStokes::matrix_fill
 
     */
 
-    // represent matrix as triplets for performance
-    std::vector<EigenTriplet> delta_a_triplet_vec;
-    int num_equation = a_mat.rows();
-    delta_a_triplet_vec.reserve(20*num_equation); // estimated number of entries
-
-   // iterate through each domain
-   for (int indx_d = 0; indx_d < domain_line_ptr_vec.size(); indx_d++)
-   {
+    // iterate through each domain
+    for (int indx_d = 0; indx_d < domain_line_ptr_vec.size(); indx_d++)
+    {
 
         // subset domain objects
         Domain2D *domain_line_ptr = domain_line_ptr_vec[indx_d];
@@ -367,58 +372,36 @@ void PhysicsSteadyNavierStokes::matrix_fill
         Scalar2D *force_y_ptr = force_y_ptr_vec[indx_d];
 
         // fill up matrix with domain equations
-        matrix_fill_domain(delta_a_triplet_vec, b_vec, x_vec, domain_line_ptr, domain_quad_ptr, integral_ptr, density_ptr, viscosity_ptr, force_x_ptr, force_y_ptr);
+        matrix_fill_domain(a_trivec, b_vec, x_vec, domain_line_ptr, domain_quad_ptr, integral_ptr, density_ptr, viscosity_ptr, force_x_ptr, force_y_ptr);
 
-   }
+    }
 
-    // convert triplet vector to sparse matrix
-    EigenSparseMatrix delta_a_mat(num_equation, num_equation);
-    delta_a_mat.setFromTriplets(delta_a_triplet_vec.begin(), delta_a_triplet_vec.end());
-    a_mat += delta_a_mat;
-
-    // clear equations with dirichlet boundary conditions
+    // iterate through each dirichlet boundary
     for (int indx_d = 0; indx_d < velocity_domain_ptr_vec.size(); indx_d++)
     {
         Domain1D *domain_ptr = velocity_domain_ptr_vec[indx_d];
-        matrix_fill_velocity_clear(a_mat, b_vec, x_vec, domain_ptr);
+        Scalar1D *velocity_x_ptr = velocity_x_ptr_vec[indx_d];
+        Scalar1D *velocity_y_ptr = velocity_y_ptr_vec[indx_d];
+        matrix_fill_velocity(a_trivec, b_vec, x_vec, domain_ptr, velocity_x_ptr, velocity_y_ptr);
     }
     for (int indx_d = 0; indx_d < pressure_domain_ptr_vec.size(); indx_d++)
     {
         Domain1D *domain_ptr = pressure_domain_ptr_vec[indx_d];
-        matrix_fill_pressure_clear(a_mat, b_vec, x_vec, domain_ptr);
+        Scalar1D *pressure_ptr = pressure_ptr_vec[indx_d];
+        matrix_fill_pressure(a_trivec, b_vec, x_vec, domain_ptr, pressure_ptr);
     }
     for (int indx_d = 0; indx_d < pressure_point_domain_ptr_vec.size(); indx_d++)
     {
         Domain0D *domain_ptr = pressure_point_domain_ptr_vec[indx_d];
-        matrix_fill_pressure_point_clear(a_mat, b_vec, x_vec, domain_ptr);
-    }
-
-   // iterate through each dirichlet boundary
-   for (int indx_d = 0; indx_d < velocity_domain_ptr_vec.size(); indx_d++)
-   {
-        Domain1D *domain_ptr = velocity_domain_ptr_vec[indx_d];
-        Scalar1D *velocity_x_ptr = velocity_x_ptr_vec[indx_d];
-        Scalar1D *velocity_y_ptr = velocity_y_ptr_vec[indx_d];
-        matrix_fill_velocity(a_mat, b_vec, x_vec, domain_ptr, velocity_x_ptr, velocity_y_ptr);
-   }
-   for (int indx_d = 0; indx_d < pressure_domain_ptr_vec.size(); indx_d++)
-   {
-        Domain1D *domain_ptr = pressure_domain_ptr_vec[indx_d];
-        Scalar1D *pressure_ptr = pressure_ptr_vec[indx_d];
-        matrix_fill_pressure(a_mat, b_vec, x_vec, domain_ptr, pressure_ptr);
-   }
-   for (int indx_d = 0; indx_d < pressure_point_domain_ptr_vec.size(); indx_d++)
-   {
-        Domain0D *domain_ptr = pressure_point_domain_ptr_vec[indx_d];
         Scalar0D *pressure_ptr = pressure_point_ptr_vec[indx_d];
-        matrix_fill_pressure_point(a_mat, b_vec, x_vec, domain_ptr, pressure_ptr);
-   }
+        matrix_fill_pressure_point(a_trivec, b_vec, x_vec, domain_ptr, pressure_ptr);
+    }
 
 }
 
 void PhysicsSteadyNavierStokes::matrix_fill_domain
 (
-    std::vector<EigenTriplet> &delta_a_triplet_vec, EigenVector &b_vec, EigenVector &x_vec,
+    EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec,
     Domain2D *domain_line_ptr, Domain2D *domain_quad_ptr, IntegralTaylorHood2D *integral_ptr,
     Scalar2D *density_ptr, Scalar2D *viscosity_ptr, Scalar2D *force_x_ptr, Scalar2D *force_y_ptr
 )
@@ -452,14 +435,28 @@ void PhysicsSteadyNavierStokes::matrix_fill_domain
         // matrix row = start_row of test function (physics) + offset + group ID of variable
         // matrix column = start_column of variable + group ID of variable
 
-        // calculate a_mat coefficients
+        // iterate through test functions
+        // associated with matrix row
         for (int indx_i = 0; indx_i < domain_quad_ptr->num_neighbor; indx_i++)
         {
 
-            // velocity x columns
+            // skip if matrix row has dirichlet condition
+            if (is_velocity_x_dirichlet_vec[velx_pfid_vec[indx_i]])
+            {
+                continue;
+            }
+
+            // calculate matrix row
+            int mat_row = start_row + offset_nsex + velx_pfid_vec[indx_i];
+
+            // iterate through velocity x trial functions
+            // associated with matrix column
             for (int indx_j = 0; indx_j < domain_quad_ptr->num_neighbor; indx_j++)
             {
                 
+                // calculate matrix column
+                int mat_col = velocity_x_ptr->start_col + velx_pfid_vec[indx_j];
+
                 // calculate velocity integrals
                 double integ_Mi_velx_derv_Mj_x = 0;
                 double integ_Mi_vely_derv_Mj_y = 0;
@@ -469,32 +466,29 @@ void PhysicsSteadyNavierStokes::matrix_fill_domain
                     integ_Mi_vely_derv_Mj_y += vely_vec[indx_k] * integral_ptr->integral_Mi_Mk_derivative_Mj_y_quad_vec[edid][indx_i][indx_j][indx_k];
                 }
                 
-                // fill up matrix
-                int mat_row = start_row + offset_nsex + velx_pfid_vec[indx_i];
-                int mat_col = velocity_x_ptr->start_col + velx_pfid_vec[indx_j];
-                delta_a_triplet_vec.push_back(EigenTriplet(
-                    mat_row, mat_col,
+                // append to a_trivec
+                a_trivec.push_back(EigenTriplet(mat_row, mat_col,
                     den_vec[indx_i] * (integ_Mi_velx_derv_Mj_x + integ_Mi_vely_derv_Mj_y) +
                     visc_vec[indx_i] * integral_ptr->integral_div_Mi_dot_div_Mj_quad_vec[edid][indx_i][indx_j]
                 ));
 
             }
 
-            // pressure columns
+            // iterate through pressure trial functions
             for (int indx_j = 0; indx_j < domain_line_ptr->num_neighbor; indx_j++)
             {
-                int mat_row = start_row + offset_nsex + velx_pfid_vec[indx_i];
+                
+                // calculate matrix column
                 int mat_col = pressure_ptr->start_col + pres_pfid_vec[indx_j];
-                delta_a_triplet_vec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Mi_derivative_Nj_x_quad_vec[edid][indx_i][indx_j]));
-            }
-            
-        }
 
-        // calculate b_vec coefficients
-        for (int indx_i = 0; indx_i < domain_quad_ptr->num_neighbor; indx_i++)
-        {
-            int mat_row = start_row + offset_nsex + velx_pfid_vec[indx_i];
+                // append to a_trivec
+                a_trivec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Mi_derivative_Nj_x_quad_vec[edid][indx_i][indx_j]));
+            
+            }
+
+            // append to b_vec
             b_vec.coeffRef(mat_row) += den_vec[indx_i] * fcex_vec[indx_i] * integral_ptr->integral_Mi_quad_vec[edid][indx_i];
+
         }
 
     }
@@ -518,18 +512,26 @@ void PhysicsSteadyNavierStokes::matrix_fill_domain
         VectorInt vely_pfid_vec = velocity_y_ptr->get_neighbor_pfid(domain_quad_ptr, edid);
         VectorInt pres_pfid_vec = pressure_ptr->get_neighbor_pfid(domain_line_ptr, edid_line);
 
-        // matrix indexing
-        // matrix row = start_row of test function (physics) + offset + group ID of variable
-        // matrix column = start_column of variable + group ID of variable
-
-        // calculate a_mat coefficients
+        // iterate through test functions
         for (int indx_i = 0; indx_i < domain_quad_ptr->num_neighbor; indx_i++)
         {
 
-            // velocity y columns
+            // skip if matrix row has dirichlet condition
+            if (is_velocity_y_dirichlet_vec[vely_pfid_vec[indx_i]])
+            {
+                continue;
+            }
+
+            // calculate matrix row
+            int mat_row = start_row + offset_nsey + vely_pfid_vec[indx_i];
+
+            // iterate through velocity y trial functions
             for (int indx_j = 0; indx_j < domain_quad_ptr->num_neighbor; indx_j++)
             {
                 
+                // calculate matrix column
+                int mat_col = velocity_y_ptr->start_col + vely_pfid_vec[indx_j];
+
                 // calculate velocity integrals
                 double integ_Mi_velx_derv_Mj_x = 0;
                 double integ_Mi_vely_derv_Mj_y = 0;
@@ -539,31 +541,29 @@ void PhysicsSteadyNavierStokes::matrix_fill_domain
                     integ_Mi_vely_derv_Mj_y += vely_vec[indx_k] * integral_ptr->integral_Mi_Mk_derivative_Mj_y_quad_vec[edid][indx_i][indx_j][indx_k];
                 }
                 
-                // fill up matrix
-                int mat_row = start_row + offset_nsey + vely_pfid_vec[indx_i];
-                int mat_col = velocity_y_ptr->start_col + vely_pfid_vec[indx_j];
-                delta_a_triplet_vec.push_back(EigenTriplet(mat_row, mat_col,
+                // append to a_trivec
+                a_trivec.push_back(EigenTriplet(mat_row, mat_col,
                     den_vec[indx_i] * (integ_Mi_velx_derv_Mj_x + integ_Mi_vely_derv_Mj_y) +
                     visc_vec[indx_i] * integral_ptr->integral_div_Mi_dot_div_Mj_quad_vec[edid][indx_i][indx_j]
                 ));
 
             }
 
-            // pressure columns
+            // iterate through pressure trial functions
             for (int indx_j = 0; indx_j < domain_line_ptr->num_neighbor; indx_j++)
             {
-                int mat_row = start_row + offset_nsey + vely_pfid_vec[indx_i];
+                
+                // calculate matrix column
                 int mat_col = pressure_ptr->start_col + pres_pfid_vec[indx_j];
-                delta_a_triplet_vec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Mi_derivative_Nj_y_quad_vec[edid][indx_i][indx_j]));
-            }
-            
-        }
 
-        // calculate b_vec coefficients
-        for (int indx_i = 0; indx_i < domain_quad_ptr->num_neighbor; indx_i++)
-        {
-            int mat_row = start_row + offset_nsey + vely_pfid_vec[indx_i];
+                // append to a_trivec
+                a_trivec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Mi_derivative_Nj_y_quad_vec[edid][indx_i][indx_j]));
+
+            }
+
+            // append to b_vec
             b_vec.coeffRef(mat_row) += den_vec[indx_i] * fcey_vec[indx_i] * integral_ptr->integral_Mi_quad_vec[edid][indx_i];
+
         }
 
     }
@@ -579,127 +579,43 @@ void PhysicsSteadyNavierStokes::matrix_fill_domain
         VectorInt vely_pfid_vec = velocity_y_ptr->get_neighbor_pfid(domain_quad_ptr, edid_quad);
         VectorInt pres_pfid_vec = pressure_ptr->get_neighbor_pfid(domain_line_ptr, edid);
 
-        // matrix indexing
-        // matrix row = start_row of test function (physics) + offset + group ID of variable
-        // matrix column = start_column of variable + group ID of variable
-
-        // calculate a_mat coefficients
+        // iterate through test functions
         for (int indx_i = 0; indx_i < domain_line_ptr->num_neighbor; indx_i++)
         {
+            
+            // skip if matrix row has dirichlet condition
+            if (is_pressure_dirichlet_vec[pres_pfid_vec[indx_i]])
+            {
+                continue;
+            }
+            
+            // calculate matrix row
+            int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
 
-            // velocity x columns
+            // iterate through velocity x trial functions
             for (int indx_j = 0; indx_j < domain_quad_ptr->num_neighbor; indx_j++)
             {
-                int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
+                
+                // calculate matrix column
                 int mat_col = velocity_x_ptr->start_col + velx_pfid_vec[indx_j];
-                delta_a_triplet_vec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Ni_derivative_Mj_x_line_vec[edid][indx_i][indx_j]));
+
+                // append to a_trivec
+                a_trivec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Ni_derivative_Mj_x_line_vec[edid][indx_i][indx_j]));
+            
             }
 
-            // velocity y columns
+            // iterate through velocity y trial functions
             for (int indx_j = 0; indx_j < domain_quad_ptr->num_neighbor; indx_j++)
             {
-                int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
+                
+                // calculate matrix column
                 int mat_col = velocity_y_ptr->start_col + vely_pfid_vec[indx_j];
-                delta_a_triplet_vec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Ni_derivative_Mj_y_line_vec[edid][indx_i][indx_j]));
+
+                // append to a_trivec
+                a_trivec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Ni_derivative_Mj_y_line_vec[edid][indx_i][indx_j]));
+            
             }
 
-        }
-
-    }
-
-}
-
-void PhysicsSteadyNavierStokes::matrix_fill_velocity_clear
-(
-    EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
-    Domain1D *domain_ptr
-)
-{
-
-    // offset the starting row depending on the equation
-    int offset_nsex = 0;
-    int offset_nsey = offset_nsex + velocity_x_ptr->num_point;
-
-    // iterate for each domain element
-    for (int edid = 0; edid < domain_ptr->num_element; edid++)
-    {
-
-        // get group ID of points
-        VectorInt velx_pfid_vec = velocity_x_ptr->get_neighbor_pfid(domain_ptr, edid);
-        VectorInt vely_pfid_vec = velocity_y_ptr->get_neighbor_pfid(domain_ptr, edid);
-
-        // clear rows (velocity x)
-        for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
-        {
-            int velx_mat_row = start_row + offset_nsex + velx_pfid_vec[indx_i];
-            a_mat.row(velx_mat_row) *= 0.;
-            b_vec.coeffRef(velx_mat_row) = 0.;
-        }
-
-        // clear rows (velocity y)
-        for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
-        {
-            int vely_mat_row = start_row + offset_nsey + vely_pfid_vec[indx_i];
-            a_mat.row(vely_mat_row) *= 0.;
-            b_vec.coeffRef(vely_mat_row) = 0.;
-        }
-
-    }
-
-}
-
-void PhysicsSteadyNavierStokes::matrix_fill_pressure_clear
-(
-    EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
-    Domain1D *domain_ptr
-)
-{
-
-    // offset the starting row depending on the equation
-    int offset_cont = velocity_x_ptr->num_point + velocity_y_ptr->num_point;
-
-    // iterate for each domain element
-    for (int edid = 0; edid < domain_ptr->num_element; edid++)
-    {
-
-        // get group ID of points
-        VectorInt pres_pfid_vec = pressure_ptr->get_neighbor_pfid(domain_ptr, edid);
-
-        // clear rows
-        for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
-        {
-            int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
-            a_mat.row(mat_row) *= 0.;
-            b_vec.coeffRef(mat_row) = 0.;
-        }
-
-    }
-
-}
-
-void PhysicsSteadyNavierStokes::matrix_fill_pressure_point_clear
-(
-    EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
-    Domain0D *domain_ptr
-)
-{
-
-    // offset the starting row depending on the equation
-    int offset_cont = velocity_x_ptr->num_point + velocity_y_ptr->num_point;
-
-    // iterate for each domain element
-    for (int edid = 0; edid < domain_ptr->num_element; edid++)
-    {
-
-        // get group ID of points
-        VectorInt pres_pfid_vec = pressure_ptr->get_neighbor_pfid(domain_ptr, edid);
-
-        // clear rows
-        for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
-        {
-            int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
-            a_mat.row(mat_row) *= 0.;
-            b_vec.coeffRef(mat_row) = 0.;
         }
 
     }
@@ -708,7 +624,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_pressure_point_clear
 
 void PhysicsSteadyNavierStokes::matrix_fill_velocity
 (
-    EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
+    EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec,
     Domain1D *domain_ptr,
     Scalar1D *velx_ptr, Scalar1D *vely_ptr
 )
@@ -730,12 +646,12 @@ void PhysicsSteadyNavierStokes::matrix_fill_velocity
         VectorInt velx_pfid_vec = velocity_x_ptr->get_neighbor_pfid(domain_ptr, edid);
         VectorInt vely_pfid_vec = velocity_y_ptr->get_neighbor_pfid(domain_ptr, edid);
 
-        // clear rows (velocity x)
+        // apply velocity x dirichlet BC
         for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
             int mat_row = start_row + offset_nsex + velx_pfid_vec[indx_i];
             int mat_col = velocity_x_ptr->start_col + velx_pfid_vec[indx_i];
-            a_mat.coeffRef(mat_row, mat_col) += 1.;
+            a_trivec.push_back(EigenTriplet(mat_row, mat_col, 1.));
             b_vec.coeffRef(mat_row) += velx_vec[indx_i];
         }
 
@@ -744,7 +660,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_velocity
         {
             int mat_row = start_row + offset_nsey + vely_pfid_vec[indx_i];
             int mat_col = velocity_y_ptr->start_col + vely_pfid_vec[indx_i];
-            a_mat.coeffRef(mat_row, mat_col) += 1.;
+            a_trivec.push_back(EigenTriplet(mat_row, mat_col, 1.));
             b_vec.coeffRef(mat_row) += vely_vec[indx_i];
         }
 
@@ -754,7 +670,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_velocity
 
 void PhysicsSteadyNavierStokes::matrix_fill_pressure
 (
-    EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
+    EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec,
     Domain1D *domain_ptr,
     Scalar1D *pres_ptr
 )
@@ -773,12 +689,12 @@ void PhysicsSteadyNavierStokes::matrix_fill_pressure
         // get group ID of points
         VectorInt pres_pfid_vec = pressure_ptr->get_neighbor_pfid(domain_ptr, edid);
 
-        // clear rows
+        // apply pressure dirichlet BC
         for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
             int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
             int mat_col = pressure_ptr->start_col + pres_pfid_vec[indx_i];
-            a_mat.coeffRef(mat_row, mat_col) += 1.;
+            a_trivec.push_back(EigenTriplet(mat_row, mat_col, 1.));
             b_vec.coeffRef(mat_row) += pres_vec[indx_i];
         }
 
@@ -788,7 +704,7 @@ void PhysicsSteadyNavierStokes::matrix_fill_pressure
 
 void PhysicsSteadyNavierStokes::matrix_fill_pressure_point
 (
-    EigenSparseMatrix &a_mat, EigenVector &b_vec, EigenVector &x_vec,
+    EigenTripletVector &a_trivec, EigenVector &b_vec, EigenVector &x_vec,
     Domain0D *domain_ptr,
     Scalar0D *pres_ptr
 )
@@ -807,12 +723,12 @@ void PhysicsSteadyNavierStokes::matrix_fill_pressure_point
         // get group ID of points
         VectorInt pres_pfid_vec = pressure_ptr->get_neighbor_pfid(domain_ptr, edid);
 
-        // clear rows
+        // apply pressure dirichlet BC
         for (int indx_i = 0; indx_i < domain_ptr->num_neighbor; indx_i++)
         {
             int mat_row = start_row + offset_cont + pres_pfid_vec[indx_i];
             int mat_col = pressure_ptr->start_col + pres_pfid_vec[indx_i];
-            a_mat.coeffRef(mat_row, mat_col) += 1.;
+            a_trivec.push_back(EigenTriplet(mat_row, mat_col, 1.));
             b_vec.coeffRef(mat_row) += pres_vec[indx_i];
         }
 
