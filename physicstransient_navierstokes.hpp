@@ -222,7 +222,8 @@ void PhysicsTransientNavierStokes::set_domain(Domain2D &domain_line_in, Domain2D
     // calculate linear domain integrals
     integral_in.evaluate_integral_Ni_derivative_Mj_x_line();
     integral_in.evaluate_integral_Ni_derivative_Mj_y_line();
-
+    integral_in.evaluate_integral_Ni_Nj_line();
+    
     // calculate quadratic domain integrals
     integral_in.evaluate_integral_Mi_quad();
     integral_in.evaluate_integral_Mi_Mj_quad();
@@ -597,6 +598,9 @@ void PhysicsTransientNavierStokes::matrix_fill_domain
         VectorInt vely_pfid_vec = velocity_y_ptr->get_neighbor_pfid(domain_quad_ptr, edid_quad);
         VectorInt pres_pfid_vec = pressure_ptr->get_neighbor_pfid(domain_line_ptr, edid);
 
+        // initialize terms added to pressure for stability
+        double pressure_stability_i = 0.;
+
         // iterate through test functions
         for (int indx_i = 0; indx_i < domain_line_ptr->num_neighbor; indx_i++)
         {
@@ -633,6 +637,27 @@ void PhysicsTransientNavierStokes::matrix_fill_domain
                 a_trivec.push_back(EigenTriplet(mat_row, mat_col, integral_ptr->integral_Ni_derivative_Mj_y_line_vec[edid][indx_i][indx_j]));
             
             }
+
+            // iterate through pressure trial functions
+            // apply coefficients for stability
+            for (int indx_j = 0; indx_j < domain_line_ptr->num_neighbor; indx_j++)
+            {
+                
+                // calculate matrix column
+                int mat_col = pressure_ptr->start_col + pres_pfid_vec[indx_j];
+                
+                // add small term to pressure for stability
+                double pressure_stability_ij = 1e-4 * integral_ptr->integral_Ni_Nj_line_vec[edid][indx_i][indx_j];
+                pressure_stability_i += pressure_stability_i;
+
+                // append to a_trivec
+                a_trivec.push_back(EigenTriplet(mat_row, mat_col, pressure_stability_ij));
+
+            }
+
+            // append to d_vec
+            // apply coefficients for stability
+            d_vec.coeffRef(indx_i) += pressure_stability_i;
 
         }
 
